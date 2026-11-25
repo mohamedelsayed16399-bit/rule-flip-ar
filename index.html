@@ -139,7 +139,7 @@ function startGame(){
   S.running=true; S.over=false; S.paused=false;
   S.t=0; S.score=0; S.coins=0; S.hearts=3;
   S.law=null; S.nextLawIn=4; S.lawCountdown=3; S.lawTimeLeft=0;
-  S.difficulty=1; S.shake=0; S.inv=0; S.banner=null;
+  S.difficulty=1; S.shake=0; S.inv=1.6; S.banner=null;
   rocks=[]; coinz=[]; parts=[];
   player.x=W/2; player.w=player.baseW; player.h=player.baseW;
   $('startScreen').classList.add('hidden');
@@ -200,7 +200,7 @@ function update(dt){
   player.y=H-90;
 
   // spawns
-  const rockRate=(0.9+S.difficulty*0.28)*(law==='rain'?2.4:1)*fast;
+  const rockRate=(0.62+S.difficulty*0.26)*(law==='rain'?2.4:1)*fast;
   spawnR-=dtg; if(spawnR<=0){ spawnR=1/rockRate;
     const fromBottom=law==='gravity';
     rocks.push({x:30+Math.random()*(W-60),y:fromBottom?H+40:-40,vy:(fromBottom?-1:1)*(140+S.difficulty*46+Math.random()*90)*fast,s:22+Math.random()*26,rot:Math.random()*6.28,vr:(Math.random()-.5)*4});
@@ -299,15 +299,15 @@ function draw(){
   // HUD
   cx.textAlign='right'; cx.textBaseline='top';
   cx.fillStyle='#fff'; cx.font='bold 26px Tahoma';
-  cx.fillText('⭐ '+Math.floor(S.score), W-14, 14);
-  cx.font='22px Tahoma'; cx.fillText('💰 '+S.coins, W-14, 48);
+  cx.fillText('⭐ '+Math.floor(S.score), W-14, 66);
+  cx.font='22px Tahoma'; cx.fillText('💰 '+S.coins, W-14, 100);
   cx.textAlign='left';
-  cx.fillText('❤️'.repeat(Math.max(0,S.hearts)), 14, 16);
+  cx.fillText('❤️'.repeat(Math.max(0,S.hearts)), 14, 68);
   cx.fillStyle='rgba(255,255,255,.75)'; cx.font='18px Tahoma';
-  cx.fillText('⏱️ '+Math.floor(S.t)+' ث', 14, 50);
+  cx.fillText('⏱️ '+Math.floor(S.t)+' ث', 14, 102);
 
   // law bar
-  const barW=Math.min(W-40,420), barX=(W-barW)/2, barY=86;
+  const barW=Math.min(W-40,420), barX=(W-barW)/2, barY=140;
   if(S.law){
     cx.fillStyle='rgba(0,0,0,.45)'; cx.beginPath(); cx.roundRect(barX,barY,barW,34,17); cx.fill();
     cx.fillStyle='#ffd54a'; cx.beginPath(); cx.roundRect(barX,barY,barW*Math.max(0,S.lawTimeLeft/S.law.dur),34,17); cx.fill();
