@@ -42,6 +42,7 @@
   <h2>كل كام ثانية قانون جديد.. هتعيش قد إيه؟</h2>
   <div id="challengeNote" class="hidden"></div>
   <p>تحرك يمين وشمال (أسهم أو دوس على نص الشاشة).<br>اهرب من الصخور ☄️ ولمّ الفلوس 💰.<br>13 قانون ممكن يقلبوا عليك، وساعات قانونين مع بعض!</p>
+  <p class="lawlist" id="statLine"></p>
   <p class="lawlist" id="achLine"></p>
   <div class="lawlist">❤️ 3 قلوب &nbsp;•&nbsp; 🏔️ الجبل بييجي كل 45 ثانية &nbsp;•&nbsp; 😅 النجاة بأعجوبة = نقاط</div>
   <div id="skins"></div>
@@ -88,7 +89,7 @@ function beep(f,d,type,g,slide){ if(muted)return; const a=ac(); if(!a)return; tr
   o.connect(gn); gn.connect(a.destination); o.start(); o.stop(a.currentTime+d);
 }catch(e){} }
 const sfx={
-  coin(){ beep(880,.09,'sine',.15); setTimeout(()=>beep(1320,.12,'sine',.12),60); },
+  coin(){ const k=Math.min(S.combo||0,10)*45; beep(880+k,.09,'sine',.15); setTimeout(()=>beep(1320+k,.12,'sine',.12),60); },
   hit(){ beep(140,.3,'sawtooth',.25,-80); },
   law(){ beep(520,.12,'triangle',.15); setTimeout(()=>beep(780,.15,'triangle',.15),110); },
   tick(){ beep(660,.06,'square',.08); },
@@ -117,6 +118,7 @@ const LAWS=[
  {id:'swarm',   name:'🐝 سرب صغار!', desc:'صخور صغيرة سريعة من كل حتة!', dur:8},
  {id:'ice',     name:'🧊 أرضية متزحلقة!', desc:'الحركة بتزحلق!', dur:9},
  {id:'flip',    name:'🔃 الدنيا مقلوبة!', desc:'الشاشة بالعكس!', dur:8},
+ {id:'chaos',   name:'🌀 صخور سايحة!', desc:'الصخور بتمشي يمين وشمال!', dur:9},
 ];
 const WORLDS=[
  {name:'الصحراء',e:'🏜️',h:35},
@@ -124,7 +126,7 @@ const WORLDS=[
  {name:'الغابة',e:'🌲',h:130},
  {name:'الفضاء',e:'🌌',h:270},
 ];
-const LAW_EMOJI={gravity:'🙃',mirror:'🔁',speed:'🔥',slow:'🐌',dark:'🌑',giant:'🦣',rain:'☄️',luck:'🍀',earthq:'🌋',wind:'💨',tiny:'🐜',coinrain:'🤑',shield:'🛡️',swarm:'🐝',ice:'🧊',flip:'🔃'};
+const LAW_EMOJI={gravity:'🙃',mirror:'🔁',speed:'🔥',slow:'🐌',dark:'🌑',giant:'🦣',rain:'☄️',luck:'🍀',earthq:'🌋',wind:'💨',tiny:'🐜',coinrain:'🤑',shield:'🛡️',swarm:'🐝',ice:'🧊',flip:'🔃',chaos:'🌀'};
 
 // ---------- Skins ----------
 const SKINS=[{e:'🏃',need:0},{e:'🚀',need:500},{e:'🐪',need:1500},{e:'👑',need:3000}];
@@ -141,7 +143,7 @@ const S={
   nextBossIn:45, bossWarn:0, bossKind:0,
   combo:0, comboT:0, lawsSeenCount:0, level:1, startHigh:0,
   magnetT:0, slowT:0, heartT:0, world:-1, powersGot:0,
-  ach:{}, trail:[],
+  ach:{}, trail:[], stats:{games:0,coins:0,bestT:0},
   high:+(localStorage.getItem('rf_high')||0),
   skin:localStorage.getItem('rf_skin')||'🏃',
   daily:false, challenge:0,
@@ -166,6 +168,7 @@ cv.addEventListener('touchend',e=>{e.preventDefault();touchSet(e);},{passive:fal
 // ---------- UI ----------
 const ACH_NAMES={coin1:'أول جنيه 💰',coin25:'25 جنيه في جيم 🤑',alive60:'عشت دقيقة كاملة ⏱️',alive120:'عشت دقيقتين 🕐',boss1:'نجوت من الجبل 🏔️',combo5:'5 فلوس ورا بعض 🔥',score1000:'1000 نقطة ⭐',laws6:'شفت 6 قوانين في جيم ⚖️',challenger:'كسرت تحدي صاحبك 🎯',daily:'لعبت تحدي النهاردة 📅',twins:'نجوت من التوأم 👯'};
 try{ S.ach=JSON.parse(localStorage.getItem('rf_ach')||'{}'); }catch(e){ S.ach={}; }
+try{ S.stats=JSON.parse(localStorage.getItem('rf_stats')||'{"games":0,"coins":0,"bestT":0}'); }catch(e){}
 function unlock(id){ if(S.ach[id])return; S.ach[id]=1; try{localStorage.setItem('rf_ach',JSON.stringify(S.ach));}catch(e){}
   addText(W/2,H*.55,'🏅 إنجاز جديد: '+(ACH_NAMES[id]||id),'#ffd54a'); beep(1000,.1,'sine',.14); setTimeout(()=>beep(1400,.14,'sine',.12),90); }
 const $=id=>document.getElementById(id);
@@ -182,6 +185,8 @@ function renderSkins(){
 }
 function renderAch(){ const n=Object.keys(S.ach).length, tot=Object.keys(ACH_NAMES).length;
   $('achLine').textContent = n? '🏅 إنجازاتك '+n+'/'+tot+': '+Object.keys(S.ach).map(k=>ACH_NAMES[k]||k).join(' • ') : '🏅 لسه مفيش إنجازات.. العب وافتحها'; }
+function renderStats(){ if(S.stats.games>0)$('statLine').textContent='📊 لعبت '+S.stats.games+' جيم • لميت '+S.stats.coins+' جنيه مجموعهم • أطول بقاء: '+S.stats.bestT+' ث'; }
+renderStats();
 renderAch();
 renderSkins();
 if(S.high>0)$('startHi').textContent='🏆 أعلى نتيجة: '+S.high;
@@ -223,6 +228,7 @@ $('cardBtn').onclick=()=>{ makeCard(); beep(1200,.1,'sine',.12); };
 function togglePause(){ if(!S.running||S.over)return; S.paused=!S.paused; $('pauseScreen').classList.toggle('hidden',!S.paused); }
 
 function startGame(daily){
+  S.stats.games++; try{localStorage.setItem('rf_stats',JSON.stringify(S.stats));}catch(e){}
   S.daily=!!daily;
   if(S.daily){ const d=new Date(); R=mulberry32(d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()); } else R=Math.random;
   S.running=true; S.over=false; S.paused=false;
@@ -244,6 +250,8 @@ function startGame(daily){
 function endGame(){
   S.over=true; S.running=false; sfx.over();
   const sc=Math.floor(S.score);
+  S.stats.coins+=S.coins; if(S.t>S.stats.bestT)S.stats.bestT=Math.floor(S.t);
+  try{localStorage.setItem('rf_stats',JSON.stringify(S.stats));}catch(e){}
   let newHigh=false;
   if(sc>S.high){ S.high=sc; localStorage.setItem('rf_high',S.high); newHigh=true; }
   const fresh=SKINS.filter(sk=>sk.need>S.startHigh&&sk.need<=S.high);
@@ -254,7 +262,7 @@ function endGame(){
   $('overChallenge').textContent=S.challenge?(sc>S.challenge?'🔥 كسرت تحدي صاحبك ('+S.challenge+')!':'😤 صاحبك لسه كسبان ('+S.challenge+').. حاول تاني'):'';
   $('shareBtn').textContent='📤 تحدّى صحابك';
   $('topbar').classList.add('hidden');
-  renderSkins(); renderAch();
+  renderSkins(); renderAch(); renderStats();
   if(S.challenge&&Math.floor(S.score)>S.challenge)unlock('challenger');
   setTimeout(()=>$('overScreen').classList.remove('hidden'),600);
 }
@@ -370,6 +378,7 @@ function update(dt){
   const pw=player.w;
   // rocks
   for(let i=rocks.length-1;i>=0;i--){ const r=rocks[i]; r.y+=r.vy*dtg; r.rot+=r.vr*dtg;
+    if(has('chaos')&&!r.boss)r.x+=Math.sin(r.rot*2.7+r.y*.008)*80*dtg;
     if(r.boss){ r.zig=(r.zig||0)+dtg; r.x=W/2+Math.sin(r.zig*1.2)*(W*.28); }
     const dirn=r.vy>0?1:-1;
     // near-miss bonus: passed player's height without being hit
@@ -461,7 +470,7 @@ function draw(){
     cx.font=`${c.s*2}px serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('💰',0,0); cx.restore(); }
   for(const r of rocks){ cx.save(); cx.translate(r.x,r.y); cx.rotate(r.rot);
     if(r.boss){ cx.fillStyle='#5a4a6a'; cx.strokeStyle='#ff5555'; cx.lineWidth=5; }
-    else { cx.fillStyle='#8a6f5a'; cx.strokeStyle='#5d4936'; cx.lineWidth=3; }
+    else { const wh=S.world>=0?WORLDS[S.world].h:25; cx.fillStyle=`hsl(${wh},28%,52%)`; cx.strokeStyle=`hsl(${wh},32%,34%)`; cx.lineWidth=3; }
     cx.beginPath(); for(let i=0;i<7;i++){ const a=i/7*6.283, rr=r.s*(0.8+((i*37)%10)/22); cx[i?'lineTo':'moveTo'](Math.cos(a)*rr,Math.sin(a)*rr); } cx.closePath(); cx.fill(); cx.stroke();
     if(r.boss){ cx.font=`${r.s}px serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('😈',0,0); }
     cx.restore(); }
