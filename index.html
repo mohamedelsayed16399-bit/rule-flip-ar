@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>القانون اتغير | لعبة البقاء</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0a0a1a; font-family:'Segoe UI',Tahoma,Arial,sans-serif; touch-action:none; user-select:none; }
+  #game { display:block; width:100%; height:100%; }
+  .overlay { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(5,5,20,.92); z-index:10; text-align:center; padding:20px; }
+  .overlay h1 { color:#ffd54a; font-size:clamp(34px,9vw,64px); margin-bottom:8px; text-shadow:0 0 24px rgba(255,213,74,.5); }
+  .overlay h2 { color:#fff; font-size:clamp(18px,5vw,28px); margin-bottom:14px; }
+  .overlay p { color:#aab; font-size:clamp(14px,4vw,18px); line-height:1.8; max-width:420px; }
+  .btn { margin-top:22px; background:linear-gradient(180deg,#ffd54a,#ff9a3c); color:#221500; border:none; border-radius:16px; padding:16px 52px; font-size:clamp(20px,5.5vw,28px); font-weight:bold; cursor:pointer; box-shadow:0 6px 0 #b56a00, 0 10px 24px rgba(0,0,0,.5); transition:transform .08s; font-family:inherit; }
+  .btn:active { transform:translateY(4px); box-shadow:0 2px 0 #b56a00; }
+  .btn2 { background:linear-gradient(180deg,#4aa8ff,#2563eb); box-shadow:0 6px 0 #123a8a, 0 10px 24px rgba(0,0,0,.5); color:#fff; }
+  .score-line { color:#fff; font-size:clamp(22px,6vw,34px); margin:10px 0; }
+  .hi { color:#ffd54a; }
+  .lawlist { color:#8fd; font-size:clamp(12px,3.6vw,16px); margin-top:14px; line-height:2; }
+  .hidden { display:none !important; }
+  #topbar { position:fixed; top:0; left:0; right:0; display:flex; justify-content:space-between; padding:10px 14px; z-index:5; pointer-events:none; }
+  #topbar button { pointer-events:auto; background:rgba(255,255,255,.12); border:none; color:#fff; border-radius:10px; width:44px; height:44px; font-size:20px; cursor:pointer; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="topbar" class="hidden">
+  <button id="muteBtn" title="الصوت">🔊</button>
+  <button id="pauseBtn" title="وقفة">⏸️</button>
+</div>
+
+<div id="startScreen" class="overlay">
+  <h1>⚖️ القانون اتغير</h1>
+  <h2>كل كام ثانية قانون جديد.. هتعيش قد إيه؟</h2>
+  <p>تحرك يمين وشمال (أسهم أو دوس على نص الشاشة).<br>اهرب من الصخور ☄️ ولمّ الفلوس 💰.<br>كل شوية القانون بيتغير: جاذبية مقلوبة، تحكم معكوس، عتمة، سرعة نار..</p>
+  <div class="lawlist">❤️ عندك 3 قلوب &nbsp;•&nbsp; ⏱️ كل ما تعيش أكتر، اللعبة تنجن أكتر</div>
+  <button class="btn" id="startBtn">ابدأ اللعب</button>
+  <p class="score-line" id="startHi"></p>
+</div>
+
+<div id="overScreen" class="overlay hidden">
+  <h1>💀 خلصت اللعبة</h1>
+  <p class="score-line">نقطتك: <b id="finalScore">0</b></p>
+  <p class="score-line">عشت <b id="finalTime">0</b> ثانية ولميت <b id="finalCoins">0</b> جنيه</p>
+  <p class="score-line hi" id="overHi"></p>
+  <button class="btn" id="againBtn">العب تاني</button>
+  <button class="btn btn2" id="shareBtn">📤 تحدّى صحابك</button>
+</div>
+
+<div id="pauseScreen" class="overlay hidden">
+  <h1>⏸️ وقفة</h1>
+  <button class="btn" id="resumeBtn">كمّل</button>
+</div>
+
+<script>
+"use strict";
+const cv = document.getElementById('game');
+const cx = cv.getContext('2d');
+let W=0, H=0, DPR=1;
+function resize(){ DPR=Math.min(window.devicePixelRatio||1,2); W=window.innerWidth; H=window.innerHeight; cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+'px'; cv.style.height=H+'px'; cx.setTransform(DPR,0,0,DPR,0,0); }
+window.addEventListener('resize',resize); resize();
+
+// ---------- Sound (WebAudio, no assets) ----------
+let AC=null, muted=false;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended')AC.resume(); return AC; }
+function beep(f,d,type,g,slide){ if(muted)return; const a=ac(); if(!a)return; try{
+  const o=a.createOscillator(),gn=a.createGain(); o.type=type||'square'; o.frequency.setValueAtTime(f,a.currentTime);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),a.currentTime+d);
+  gn.gain.setValueAtTime((g||0.12),a.currentTime); gn.gain.exponentialRampToValueAtTime(0.001,a.currentTime+d);
+  o.connect(gn); gn.connect(a.destination); o.start(); o.stop(a.currentTime+d);
+}catch(e){} }
+const sfx={
+  coin(){ beep(880,.09,'sine',.15); setTimeout(()=>beep(1320,.12,'sine',.12),60); },
+  hit(){ beep(140,.3,'sawtooth',.25,-80); },
+  law(){ beep(520,.12,'triangle',.15); setTimeout(()=>beep(780,.15,'triangle',.15),110); },
+  tick(){ beep(660,.06,'square',.08); },
+  over(){ beep(330,.25,'sawtooth',.2,-100); setTimeout(()=>beep(220,.35,'sawtooth',.2,-120),220); setTimeout(()=>beep(110,.5,'sawtooth',.22,-60),450); },
+  start(){ beep(440,.1,'triangle',.15); setTimeout(()=>beep(660,.1,'triangle',.15),100); setTimeout(()=>beep(880,.18,'triangle',.18),200); }
+};
+
+// ---------- Laws ----------
+const LAWS=[
+ {id:'gravity', name:'🙃 الجاذبية اتقلبت!', desc:'الصخور جاية من تحت!', dur:10},
+ {id:'mirror',  name:'🔁 التحكم معكوس!', desc:'يمين بقى شمال!', dur:10},
+ {id:'speed',   name:'🔥 السرعة نار!', desc:'كل حاجة أسرع!', dur:10},
+ {id:'slow',    name:'🐌 الزمن بيمشي بطيء', desc:'استفيد.. بس النقط أبطأ', dur:10},
+ {id:'dark',    name:'🌑 عتمة!', desc:'شوف على قد نورك!', dur:10},
+ {id:'giant',   name:'🦣 انت عملاق!', desc:'أكبر.. بس الفلوس ضعف!', dur:10},
+ {id:'rain',    name:'☄️ مطر نار!', desc:'صخور كتير جدًا!', dur:10},
+ {id:'luck',    name:'🍀 حظ مضاعف!', desc:'الفلوس ×3!', dur:8},
+ {id:'earthq',  name:'🌋 زلزال!', desc:'الشاشة بترج!', dur:8},
+];
+const LAW_EMOJI={gravity:'🙃',mirror:'🔁',speed:'🔥',slow:'🐌',dark:'🌑',giant:'🦣',rain:'☄️',luck:'🍀',earthq:'🌋'};
+
+// ---------- State ----------
+const S={
+  running:false, paused:false, over:false,
+  t:0, score:0, coins:0, hearts:3,
+  law:null, lawTimeLeft:0, nextLawIn:4, lawCountdown:3,
+  lawDuration:10, difficulty:1,
+  shake:0, flash:0, flashColor:'#fff',
+  inv:0, hue:200, banner:null, bannerT:0,
+  high:+(localStorage.getItem('rf_high')||0),
+};
+const player={x:0,y:0,vy:0,w:46,h:46,baseW:46,dir:0,face:1};
+let rocks=[], coinz=[], parts=[], stars=[];
+for(let i=0;i<90;i++) stars.push({x:Math.random(),y:Math.random(),s:Math.random()*1.8+.4,tw:Math.random()*6.28});
+
+// ---------- Input ----------
+const keys={};
+window.addEventListener('keydown',e=>{ keys[e.key]=true; if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault(); if(e.key==='p'||e.key==='P')togglePause(); });
+window.addEventListener('keyup',e=>{ keys[e.key]=false; });
+let touchDir=0, touchL=false, touchR=false;
+function touchSet(e){ const r=cv.getBoundingClientRect(); let l=false,rr=false;
+  for(const t of e.touches){ const x=t.clientX-r.left; if(x<r.width/2)l=true; else rr=true; }
+  touchL=l; touchR=rr; touchDir=(rr?1:0)-(l?1:0); }
+cv.addEventListener('touchstart',e=>{e.preventDefault();touchSet(e);},{passive:false});
+cv.addEventListener('touchmove',e=>{e.preventDefault();touchSet(e);},{passive:false});
+cv.addEventListener('touchend',e=>{e.preventDefault();touchSet(e);},{passive:false});
+
+// ---------- UI ----------
+const $=id=>document.getElementById(id);
+$('startBtn').onclick=()=>{ sfx.start(); startGame(); };
+$('againBtn').onclick=()=>{ sfx.start(); startGame(); };
+$('resumeBtn').onclick=()=>togglePause();
+$('pauseBtn').onclick=()=>togglePause();
+$('muteBtn').onclick=()=>{ muted=!muted; $('muteBtn').textContent=muted?'🔇':'🔊'; };
+$('shareBtn').onclick=()=>{
+  const txt=`أنا عشت ${Math.floor(S.t)} ثانية وجبت ${Math.floor(S.score)} نقطة في "القانون اتغير" 😈 تعرف تكسر رقمي؟ ${location.href}`;
+  if(navigator.share){ navigator.share({text:txt}).catch(()=>{}); }
+  else if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(()=>{ $('shareBtn').textContent='✅ اتنسخ! ابعته لصحابك'; }); }
+};
+if(S.high>0)$('startHi').textContent='🏆 أعلى نتيجة: '+S.high;
+
+function togglePause(){ if(!S.running||S.over)return; S.paused=!S.paused; $('pauseScreen').classList.toggle('hidden',!S.paused); }
+
+function startGame(){
+  S.running=true; S.over=false; S.paused=false;
+  S.t=0; S.score=0; S.coins=0; S.hearts=3;
+  S.law=null; S.nextLawIn=4; S.lawCountdown=3; S.lawTimeLeft=0;
+  S.difficulty=1; S.shake=0; S.inv=0; S.banner=null;
+  rocks=[]; coinz=[]; parts=[];
+  player.x=W/2; player.w=player.baseW; player.h=player.baseW;
+  $('startScreen').classList.add('hidden');
+  $('overScreen').classList.add('hidden');
+  $('pauseScreen').classList.add('hidden');
+  $('topbar').classList.remove('hidden');
+}
+
+function endGame(){
+  S.over=true; S.running=false; sfx.over();
+  if(Math.floor(S.score)>S.high){ S.high=Math.floor(S.score); localStorage.setItem('rf_high',S.high); $('overHi').textContent='🏆 رقم قياسي جديد!'; }
+  else $('overHi').textContent='🏆 أعلى نتيجة: '+S.high;
+  $('finalScore').textContent=Math.floor(S.score);
+  $('finalTime').textContent=Math.floor(S.t);
+  $('finalCoins').textContent=S.coins;
+  $('shareBtn').textContent='📤 تحدّى صحابك';
+  $('topbar').classList.add('hidden');
+  setTimeout(()=>$('overScreen').classList.remove('hidden'),600);
+}
+
+function spawnBurst(x,y,c,n){ for(let i=0;i<n;i++) parts.push({x,y,vx:(Math.random()-.5)*320,vy:(Math.random()-.5)*320-80,l:1,c}); }
+
+function pickLaw(){
+  let pool=LAWS.filter(l=>!S.law||l.id!==S.law.id);
+  const l=pool[Math.floor(Math.random()*pool.length)];
+  S.law=l; S.lawTimeLeft=l.dur;
+  S.banner={txt:l.name,sub:l.desc}; S.bannerT=2.2;
+  sfx.law(); S.flash=.25; S.flashColor='#ffd54a';
+  S.hue=Math.floor(Math.random()*360);
+  player.w=l.id==='giant'?player.baseW*1.7:player.baseW;
+  player.h=player.w;
+}
+
+// ---------- Update ----------
+let spawnR=0, spawnC=0;
+function update(dt){
+  const law=S.law?S.law.id:null;
+  const slow=law==='slow'?0.5:1;
+  const fast=law==='speed'?1.7:1;
+  const dtg=dt*slow;
+  S.t+=dtg; S.difficulty=1+S.t/25;
+
+  // law timing
+  if(S.law){ S.lawTimeLeft-=dt; if(S.lawTimeLeft<=0){ S.law=null; S.nextLawIn=Math.max(2.5,4-S.t/60); S.lawCountdown=3; player.w=player.baseW; player.h=player.baseW; S.banner={txt:'⚖️ القانون رجع عادي',sub:'استعد للي جاي..'}; S.bannerT=1.4; } }
+  else { S.nextLawIn-=dt;
+    if(S.nextLawIn<=3&&S.lawCountdown>Math.ceil(S.nextLawIn)){ S.lawCountdown=Math.ceil(S.nextLawIn); if(S.lawCountdown>0)sfx.tick(); }
+    if(S.nextLawIn<=0) pickLaw();
+  }
+  S.lawDuration=Math.max(6,10-S.t/30);
+
+  // player
+  let dir=((keys['ArrowRight']||keys['d']?1:0)-(keys['ArrowLeft']||keys['a']?1:0))+touchDir;
+  if(law==='mirror')dir=-dir;
+  if(dir!==0)player.face=dir;
+  const spd=430*(law==='giant'?1.15:1);
+  player.x+=dir*spd*dtg;
+  player.x=Math.max(player.w/2,Math.min(W-player.w/2,player.x));
+  player.y=H-90;
+
+  // spawns
+  const rockRate=(0.9+S.difficulty*0.28)*(law==='rain'?2.4:1)*fast;
+  spawnR-=dtg; if(spawnR<=0){ spawnR=1/rockRate;
+    const fromBottom=law==='gravity';
+    rocks.push({x:30+Math.random()*(W-60),y:fromBottom?H+40:-40,vy:(fromBottom?-1:1)*(140+S.difficulty*46+Math.random()*90)*fast,s:22+Math.random()*26,rot:Math.random()*6.28,vr:(Math.random()-.5)*4});
+  }
+  spawnC-=dtg; if(spawnC<=0){ spawnC=Math.max(.7,1.6-S.difficulty*.05);
+    const fromBottom=law==='gravity';
+    coinz.push({x:30+Math.random()*(W-60),y:fromBottom?H+30:-30,vy:(fromBottom?-1:1)*(120+Math.random()*70)*fast,s:16,ph:Math.random()*6.28});
+  }
+
+  const pw=player.w;
+  // rocks
+  for(let i=rocks.length-1;i>=0;i--){ const r=rocks[i]; r.y+=r.vy*dtg; r.rot+=r.vr*dtg;
+    if(r.y<-80||r.y>H+80){ rocks.splice(i,1); continue; }
+    const dx=r.x-player.x, dy=r.y-(player.y-player.h/2);
+    if(Math.abs(dx)<(r.s+pw)*.42&&Math.abs(dy)<(r.s+player.h)*.42){
+      if(S.inv<=0){ S.hearts--; S.inv=1.4; S.shake=.6; S.flash=.3; S.flashColor='#f33'; sfx.hit(); spawnBurst(player.x,player.y-30,'#ff5555',22); rocks.splice(i,1);
+        if(S.hearts<=0){ endGame(); return; }
+      }
+    }
+  }
+  // coins
+  for(let i=coinz.length-1;i>=0;i--){ const c=coinz[i]; c.ph+=dtg*6;
+    if(law==='luck'){ const dx=player.x-c.x, dy=(player.y-30)-c.y, d=Math.hypot(dx,dy); if(d<180){ c.x+=dx/d*340*dtg; c.y+=dy/d*340*dtg; } }
+    c.y+=c.vy*dtg;
+    if(c.y<-60||c.y>H+60){ coinz.splice(i,1); continue; }
+    const dx=c.x-player.x, dy=c.y-(player.y-player.h/2);
+    if(Math.hypot(dx,dy)<(c.s+pw*.5)*.9){
+      const val=law==='giant'?2:law==='luck'?3:1;
+      S.coins+=val; S.score+=val*15; sfx.coin(); spawnBurst(c.x,c.y,'#ffd54a',12); coinz.splice(i,1);
+    }
+  }
+  S.score+=dtg*(law==='slow'?4:10)*S.difficulty;
+
+  // particles
+  for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=500*dt; p.l-=dt*1.8; if(p.l<=0)parts.splice(i,1); }
+
+  if(S.inv>0)S.inv-=dt;
+  if(S.shake>0)S.shake-=dt*1.6;
+  if(S.flash>0)S.flash-=dt;
+  if(S.bannerT>0)S.bannerT-=dt;
+  if(law==='earthq')S.shake=Math.max(S.shake,.12);
+}
+
+// ---------- Draw ----------
+function draw(){
+  cx.clearRect(0,0,W,H);
+  // bg
+  const g=cx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,`hsl(${S.hue},45%,10%)`); g.addColorStop(1,`hsl(${(S.hue+40)%360},55%,20%)`);
+  cx.fillStyle=g; cx.fillRect(0,0,W,H);
+  // stars
+  cx.fillStyle='#fff';
+  for(const s of stars){ const a=.3+.7*Math.abs(Math.sin(S.t*2+s.tw)); cx.globalAlpha=a*.8; cx.fillRect(s.x*W,s.y*H,s.s,s.s); }
+  cx.globalAlpha=1;
+
+  cx.save();
+  if(S.shake>0)cx.translate((Math.random()-.5)*S.shake*26,(Math.random()-.5)*S.shake*26);
+
+  // ground
+  cx.fillStyle='rgba(255,255,255,.08)'; cx.fillRect(0,H-46,W,46);
+  cx.fillStyle=`hsl(${S.hue},60%,45%)`; cx.fillRect(0,H-46,W,4);
+
+  // coins
+  for(const c of coinz){ cx.save(); cx.translate(c.x,c.y); cx.scale(Math.abs(Math.cos(c.ph))*.5+.5,1);
+    cx.font=`${c.s*2}px serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('💰',0,0); cx.restore(); }
+  // rocks
+  for(const r of rocks){ cx.save(); cx.translate(r.x,r.y); cx.rotate(r.rot);
+    cx.fillStyle='#8a6f5a'; cx.strokeStyle='#5d4936'; cx.lineWidth=3;
+    cx.beginPath(); for(let i=0;i<7;i++){ const a=i/7*6.283, rr=r.s*(0.8+((i*37)%10)/22); cx[i?'lineTo':'moveTo'](Math.cos(a)*rr,Math.sin(a)*rr); } cx.closePath(); cx.fill(); cx.stroke();
+    cx.restore(); }
+  // particles
+  for(const p of parts){ cx.globalAlpha=Math.max(0,p.l); cx.fillStyle=p.c; cx.fillRect(p.x-3,p.y-3,6,6); }
+  cx.globalAlpha=1;
+
+  // player (invincibility blink)
+  if(!(S.inv>0&&Math.floor(S.inv*12)%2===0)){
+    cx.save(); cx.translate(player.x,player.y-player.h/2);
+    cx.font=`${player.h}px serif`; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.save(); if(player.face<0)cx.scale(-1,1); cx.fillText('🏃',0,0); cx.restore();
+    cx.restore();
+  }
+  cx.restore();
+
+  // darkness
+  if(S.law&&S.law.id==='dark'){
+    const gr=cx.createRadialGradient(player.x,player.y-40,60,player.x,player.y-40,Math.max(W,H)*.8);
+    gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(.35,'rgba(0,0,0,.55)'); gr.addColorStop(1,'rgba(0,0,0,.97)');
+    cx.fillStyle=gr; cx.fillRect(0,0,W,H);
+  }
+
+  // flash
+  if(S.flash>0){ cx.globalAlpha=S.flash*1.6; cx.fillStyle=S.flashColor; cx.fillRect(0,0,W,H); cx.globalAlpha=1; }
+
+  if(!S.running)return;
+
+  // HUD
+  cx.textAlign='right'; cx.textBaseline='top';
+  cx.fillStyle='#fff'; cx.font='bold 26px Tahoma';
+  cx.fillText('⭐ '+Math.floor(S.score), W-14, 14);
+  cx.font='22px Tahoma'; cx.fillText('💰 '+S.coins, W-14, 48);
+  cx.textAlign='left';
+  cx.fillText('❤️'.repeat(Math.max(0,S.hearts)), 14, 16);
+  cx.fillStyle='rgba(255,255,255,.75)'; cx.font='18px Tahoma';
+  cx.fillText('⏱️ '+Math.floor(S.t)+' ث', 14, 50);
+
+  // law bar
+  const barW=Math.min(W-40,420), barX=(W-barW)/2, barY=86;
+  if(S.law){
+    cx.fillStyle='rgba(0,0,0,.45)'; cx.beginPath(); cx.roundRect(barX,barY,barW,34,17); cx.fill();
+    cx.fillStyle='#ffd54a'; cx.beginPath(); cx.roundRect(barX,barY,barW*Math.max(0,S.lawTimeLeft/S.law.dur),34,17); cx.fill();
+    cx.fillStyle='#000'; cx.font='bold 17px Tahoma'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText((LAW_EMOJI[S.law.id]||'')+' '+S.law.name.replace(/^[^ ]+ /,'')+' '+Math.ceil(S.lawTimeLeft), W/2, barY+17);
+  } else {
+    cx.fillStyle='rgba(0,0,0,.45)'; cx.beginPath(); cx.roundRect(barX,barY,barW,34,17); cx.fill();
+    cx.fillStyle='#8fd'; cx.beginPath(); cx.roundRect(barX,barY,barW*Math.max(0,1-S.nextLawIn/4),34,17); cx.fill();
+    cx.fillStyle='#042'; cx.font='bold 17px Tahoma'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText('⚠️ قانون جديد بعد '+Math.max(1,Math.ceil(S.nextLawIn)), W/2, barY+17);
+  }
+
+  // banner
+  if(S.banner&&S.bannerT>0){
+    const a=Math.min(1,S.bannerT/.4), sc=1+(2.2-S.bannerT)*.05;
+    cx.globalAlpha=a; cx.save(); cx.translate(W/2,H*.32); cx.scale(sc,sc);
+    cx.fillStyle='rgba(0,0,0,.65)'; cx.beginPath(); cx.roundRect(-W*.44,-56,W*.88,112,20); cx.fill();
+    cx.fillStyle='#ffd54a'; cx.font='bold 34px Tahoma'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText(S.banner.txt,0,-18);
+    cx.fillStyle='#fff'; cx.font='20px Tahoma'; cx.fillText(S.banner.sub,0,22);
+    cx.restore(); cx.globalAlpha=1;
+  }
+}
+
+// ---------- Loop ----------
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now;
+  if(S.running&&!S.paused&&!S.over)update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------- Autotest (?autotest=seconds) ----------
+(function(){
+  const m=location.search.match(/autotest=(\d+)/); if(!m)return;
+  const secs=+m[1];
+  window.addEventListener('error',e=>console.log('AUTOTEST_JS_ERROR: '+e.message));
+  setTimeout(()=>{
+    $('startBtn').click(); console.log('AUTOTEST_STARTED');
+    const lawsSeen=new Set(); let deaths=0, maxRocks=0;
+    try{
+      for(let f=0; f<secs*60; f++){
+        keys['ArrowLeft']=(Math.floor(f/24)%2===0); keys['ArrowRight']=!keys['ArrowLeft'];
+        if(S.running&&!S.over){ update(1/60); if(S.law)lawsSeen.add(S.law.id); maxRocks=Math.max(maxRocks,rocks.length); }
+        if(S.over){ deaths++; if(deaths>=3)break; startGame(); }
+      }
+      draw();
+      console.log('AUTOTEST_DONE score='+Math.floor(S.score)+' coins='+S.coins+' deaths='+deaths+' maxRocks='+maxRocks+' lawsSeen='+[...lawsSeen].join(',')+' parts='+parts.length);
+    }catch(err){ console.log('AUTOTEST_JS_ERROR: '+err.message+' @ '+(err.stack||'').split('\n')[1]); }
+  },300);
+})();
+</script>
+</body>
+</html>
