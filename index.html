@@ -42,6 +42,7 @@
   <h2>كل كام ثانية قانون جديد.. هتعيش قد إيه؟</h2>
   <div id="challengeNote" class="hidden"></div>
   <p>تحرك يمين وشمال (أسهم أو دوس على نص الشاشة).<br>اهرب من الصخور ☄️ ولمّ الفلوس 💰.<br>13 قانون ممكن يقلبوا عليك، وساعات قانونين مع بعض!</p>
+  <p class="lawlist" id="achLine"></p>
   <div class="lawlist">❤️ 3 قلوب &nbsp;•&nbsp; 🏔️ الجبل بييجي كل 45 ثانية &nbsp;•&nbsp; 😅 النجاة بأعجوبة = نقاط</div>
   <div id="skins"></div>
   <button class="btn" id="startBtn">ابدأ اللعب</button>
@@ -57,6 +58,7 @@
   <p class="score-line" id="overChallenge"></p>
   <button class="btn" id="againBtn">العب تاني</button>
   <button class="btn btn2" id="shareBtn">📤 تحدّى صحابك</button>
+  <button class="btn btn3" id="cardBtn">📸 حمّل صورة نتيجتك</button>
 </div>
 
 <div id="pauseScreen" class="overlay hidden">
@@ -112,8 +114,9 @@ const LAWS=[
  {id:'tiny',    name:'🐜 انت صغير!', desc:'أصغر وأسرع.. استغلها!', dur:9},
  {id:'coinrain',name:'🤑 مطر فلوس!', desc:'لمّ بسرعة!', dur:8},
  {id:'shield',  name:'🛡️ درع!', desc:'ضربة واحدة ببلاش!', dur:9},
+ {id:'swarm',   name:'🐝 سرب صغار!', desc:'صخور صغيرة سريعة من كل حتة!', dur:8},
 ];
-const LAW_EMOJI={gravity:'🙃',mirror:'🔁',speed:'🔥',slow:'🐌',dark:'🌑',giant:'🦣',rain:'☄️',luck:'🍀',earthq:'🌋',wind:'💨',tiny:'🐜',coinrain:'🤑',shield:'🛡️'};
+const LAW_EMOJI={gravity:'🙃',mirror:'🔁',speed:'🔥',slow:'🐌',dark:'🌑',giant:'🦣',rain:'☄️',luck:'🍀',earthq:'🌋',wind:'💨',tiny:'🐜',coinrain:'🤑',shield:'🛡️',swarm:'🐝'};
 
 // ---------- Skins ----------
 const SKINS=[{e:'🏃',need:0},{e:'🚀',need:500},{e:'🐪',need:1500},{e:'👑',need:3000}];
@@ -127,7 +130,9 @@ const S={
   shake:0, flash:0, flashColor:'#fff',
   inv:0, hue:200, banner:null, bannerT:0,
   windDir:1, shieldLeft:0,
-  nextBossIn:45, bossWarn:0,
+  nextBossIn:45, bossWarn:0, bossKind:0,
+  combo:0, comboT:0, lawsSeenCount:0,
+  ach:{}, trail:[],
   high:+(localStorage.getItem('rf_high')||0),
   skin:localStorage.getItem('rf_skin')||'🏃',
   daily:false, challenge:0,
@@ -150,6 +155,10 @@ cv.addEventListener('touchmove',e=>{e.preventDefault();touchSet(e);},{passive:fa
 cv.addEventListener('touchend',e=>{e.preventDefault();touchSet(e);},{passive:false});
 
 // ---------- UI ----------
+const ACH_NAMES={coin1:'أول جنيه 💰',coin25:'25 جنيه في جيم 🤑',alive60:'عشت دقيقة كاملة ⏱️',alive120:'عشت دقيقتين 🕐',boss1:'نجوت من الجبل 🏔️',combo5:'5 فلوس ورا بعض 🔥',score1000:'1000 نقطة ⭐',laws6:'شفت 6 قوانين في جيم ⚖️',challenger:'كسرت تحدي صاحبك 🎯',daily:'لعبت تحدي النهاردة 📅',twins:'نجوت من التوأم 👯'};
+try{ S.ach=JSON.parse(localStorage.getItem('rf_ach')||'{}'); }catch(e){ S.ach={}; }
+function unlock(id){ if(S.ach[id])return; S.ach[id]=1; try{localStorage.setItem('rf_ach',JSON.stringify(S.ach));}catch(e){}
+  addText(W/2,H*.55,'🏅 إنجاز جديد: '+(ACH_NAMES[id]||id),'#ffd54a'); beep(1000,.1,'sine',.14); setTimeout(()=>beep(1400,.14,'sine',.12),90); }
 const $=id=>document.getElementById(id);
 function renderSkins(){
   const el=$('skins'); el.innerHTML='';
@@ -162,6 +171,9 @@ function renderSkins(){
     el.appendChild(b);
   }
 }
+function renderAch(){ const n=Object.keys(S.ach).length, tot=Object.keys(ACH_NAMES).length;
+  $('achLine').textContent = n? '🏅 إنجازاتك '+n+'/'+tot+': '+Object.keys(S.ach).map(k=>ACH_NAMES[k]||k).join(' • ') : '🏅 لسه مفيش إنجازات.. العب وافتحها'; }
+renderAch();
 renderSkins();
 if(S.high>0)$('startHi').textContent='🏆 أعلى نتيجة: '+S.high;
 // challenge link ?c=SCORE
@@ -180,6 +192,25 @@ $('shareBtn').onclick=()=>{
   else if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(()=>{ $('shareBtn').textContent='✅ اتنسخ! ابعته لصحابك'; }); }
 };
 
+function makeCard(){
+  const c=document.createElement('canvas'); c.width=1080; c.height=1080; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,1080); g.addColorStop(0,'#1a0f3c'); g.addColorStop(1,'#3c1656');
+  x.fillStyle=g; x.fillRect(0,0,1080,1080);
+  for(let i=0;i<160;i++){ x.globalAlpha=.2+.8*Math.abs(Math.sin(i*7)); x.fillStyle='#fff'; x.fillRect((i*137)%1080,(i*271)%1080,3,3); }
+  x.globalAlpha=1;
+  x.strokeStyle='#ffd54a'; x.lineWidth=10; x.strokeRect(30,30,1020,1020);
+  x.textAlign='center'; x.direction='rtl';
+  x.fillStyle='#ffd54a'; x.font='bold 90px Tahoma'; x.fillText('⚖️ القانون اتغير',540,220);
+  x.fillStyle='#fff'; x.font='bold 300px Tahoma'; x.fillText(Math.floor(S.score),540,570);
+  x.font='bold 60px Tahoma'; x.fillStyle='#8fd'; x.fillText('نقطة',540,660);
+  x.fillStyle='#fff'; x.font='48px Tahoma';
+  x.fillText('عشت '+Math.floor(S.t)+' ثانية • لميت '+S.coins+' جنيه 💰',540,780);
+  if(S.challenge)x.fillText(S.score>S.challenge?'🔥 كسرت تحدي صاحبي ('+S.challenge+')!':'🎯 التحدي كان '+S.challenge,540,860);
+  x.fillStyle='#ff9a3c'; x.font='bold 52px Tahoma'; x.fillText('تقدر تكسر رقمي؟ 😈',540,950);
+  const a=document.createElement('a'); a.download='rule-flip-score.png'; a.href=c.toDataURL('image/png'); a.click();
+  return c.toDataURL('image/png').length;
+}
+$('cardBtn').onclick=()=>{ makeCard(); beep(1200,.1,'sine',.12); };
 function togglePause(){ if(!S.running||S.over)return; S.paused=!S.paused; $('pauseScreen').classList.toggle('hidden',!S.paused); }
 
 function startGame(daily){
@@ -196,7 +227,7 @@ function startGame(daily){
   $('overScreen').classList.add('hidden');
   $('pauseScreen').classList.add('hidden');
   $('topbar').classList.remove('hidden');
-  if(S.daily){ S.banner={txt:'📅 تحدي النهاردة',sub:'قلب واحد بس.. نفس اللعبة عند الكل النهاردة!'}; S.bannerT=2.2; }
+  if(S.daily){ S.banner={txt:'📅 تحدي النهاردة',sub:'قلب واحد بس.. نفس اللعبة عند الكل النهاردة!'}; S.bannerT=2.2; unlock('daily'); }
 }
 
 function endGame(){
@@ -211,7 +242,8 @@ function endGame(){
   $('overChallenge').textContent=S.challenge?(sc>S.challenge?'🔥 كسرت تحدي صاحبك ('+S.challenge+')!':'😤 صاحبك لسه كسبان ('+S.challenge+').. حاول تاني'):'';
   $('shareBtn').textContent='📤 تحدّى صحابك';
   $('topbar').classList.add('hidden');
-  renderSkins();
+  renderSkins(); renderAch();
+  if(S.challenge&&Math.floor(S.score)>S.challenge)unlock('challenger');
   setTimeout(()=>$('overScreen').classList.remove('hidden'),600);
 }
 
@@ -225,9 +257,11 @@ function pickLaw(){
   const pick=()=>pool.splice(Math.floor(R()*pool.length),1)[0];
   const l1=pick();
   let chosen=[l1];
-  // combos after 60s
-  if(S.t>60 && pool.length>0 && R()<0.3){ chosen.push(pick()); }
+  // combos: 2 laws after 45s, small chance of 3 after 120s
+  if(S.t>45 && pool.length>0 && R()<0.32){ chosen.push(pick()); }
+  if(S.t>120 && pool.length>0 && R()<0.12){ chosen.push(pick()); }
   for(const l of chosen){ S.laws.push({id:l.id,name:l.name,dur:l.dur,timeLeft:l.dur}); }
+  S.lawsSeenCount+=chosen.length; if(S.lawsSeenCount>=6)unlock('laws6');
   if(has('wind'))S.windDir=R()<0.5?-1:1;
   if(has('shield'))S.shieldLeft=1;
   applySize();
@@ -241,8 +275,17 @@ function pickLaw(){
 
 function spawnBoss(){
   const fromBottom=has('gravity');
-  rocks.push({boss:true, x:W/2, y:fromBottom?H+110:-110, vy:(fromBottom?-1:1)*95, s:85, rot:0, vr:.5, zig:0, counted:false});
-  S.banner={txt:'🏔️ الجبل جاي!', sub:'اهرب منه.. النجاة منه بـ 100 نقطة'}; S.bannerT=2.4; sfx.boss(); S.shake=.5;
+  S.bossKind=(S.bossKind||0)%2;
+  if(S.bossKind===0){
+    rocks.push({boss:true, bonus:100, x:W/2, y:fromBottom?H+110:-110, vy:(fromBottom?-1:1)*95, s:85, rot:0, vr:.5, zig:0, counted:false});
+    S.banner={txt:'🏔️ الجبل جاي!', sub:'اهرب منه.. النجاة منه بـ 100 نقطة'};
+  } else {
+    rocks.push({boss:true, twins:1, bonus:50, x:W*.3, y:fromBottom?H+80:-80, vy:(fromBottom?-1:1)*115, s:55, rot:0, vr:1, zig:0, counted:false});
+    rocks.push({boss:true, twins:1, bonus:50, x:W*.7, y:fromBottom?H+80:-80, vy:(fromBottom?-1:1)*115, s:55, rot:0, vr:-1, zig:2, counted:false});
+    S.banner={txt:'👯 التوأم جاي!', sub:'صخرتين مع بعض.. كل وحدة بـ 50 نقطة'};
+  }
+  S.bossKind++;
+  S.bannerT=2.4; sfx.boss(); S.shake=.5;
 }
 
 // ---------- Update ----------
@@ -283,7 +326,11 @@ function update(dt){
   const rockRate=(0.62+S.difficulty*0.26)*(has('rain')?2.4:1)*fast;
   spawnR-=dtg; if(spawnR<=0){ spawnR=1/rockRate;
     const fromBottom=has('gravity');
-    rocks.push({x:30+R()*(W-60),y:fromBottom?H+40:-40,vy:(fromBottom?-1:1)*(140+S.difficulty*46+R()*90)*fast,s:22+R()*26,rot:R()*6.28,vr:(R()-.5)*4,counted:false});
+    const n=has('swarm')?3:1;
+    for(let k=0;k<n;k++){
+      const small=has('swarm');
+      rocks.push({x:30+R()*(W-60),y:fromBottom?H+40:-40,vy:(fromBottom?-1:1)*((small?200:140)+S.difficulty*46+R()*90)*fast,s:small?12+R()*10:22+R()*26,rot:R()*6.28,vr:(R()-.5)*4,counted:false});
+    }
   }
   spawnC-=dtg; if(spawnC<=0){ spawnC=Math.max(.35,(has('coinrain')?0.45:1.6)-S.difficulty*.05);
     const fromBottom=has('gravity');
@@ -301,14 +348,14 @@ function update(dt){
       if(ndx<(r.s+pw)*(r.boss?1.2:.95)){ S.score+=r.boss?0:3; if(!r.boss){ addText(player.x,player.y-90,'😅 عدّت! +3','#8fd'); sfx.near(); } }
     }
     if(r.y<-160||r.y>H+160){
-      if(r.boss){ S.score+=100; addText(W/2,H*.4,'🏔️ نجوت من الجبل! +100','#ffd54a'); sfx.bossPass(); }
+      if(r.boss){ const b=r.bonus||100; S.score+=b; addText(W/2,H*.4,(r.twins?'👯 +':'🏔️ نجوت من الجبل! +')+b,'#ffd54a'); sfx.bossPass(); unlock(r.twins?'twins':'boss1'); }
       rocks.splice(i,1); continue; }
     const dx=r.x-player.x, dy=r.y-(player.y-player.h/2);
     const hitK=r.boss?.5:.42;
     if(Math.abs(dx)<(r.s+pw)*hitK&&Math.abs(dy)<(r.s+player.h)*hitK){
       if(S.inv<=0){
         if(S.shieldLeft>0){ S.shieldLeft--; S.inv=1.2; addText(player.x,player.y-90,'🛡️ الدرع أنقذك!','#4aa8ff'); sfx.near(); }
-        else { S.hearts--; S.inv=1.4; S.shake=.6; S.flash=.3; S.flashColor='#f33'; sfx.hit(); spawnBurst(player.x,player.y-30,'#ff5555',22);
+        else { S.hearts--; S.combo=0; S.inv=1.4; S.shake=.6; S.flash=.3; S.flashColor='#f33'; sfx.hit(); spawnBurst(player.x,player.y-30,'#ff5555',22);
           if(S.hearts<=0){ endGame(); return; } }
         if(!r.boss)rocks.splice(i,1);
       }
@@ -322,10 +369,21 @@ function update(dt){
     const dx=c.x-player.x, dy=c.y-(player.y-player.h/2);
     if(Math.hypot(dx,dy)<(c.s+pw*.5)*.9){
       const val=has('giant')?2:has('luck')?3:1;
-      S.coins+=val; S.score+=val*15; sfx.coin(); spawnBurst(c.x,c.y,'#ffd54a',12); coinz.splice(i,1);
+      S.combo++; S.comboT=3;
+      const mult=1+Math.min(S.combo-1,8)*.25;
+      const pts=Math.round(val*15*mult);
+      S.coins+=val; S.score+=pts; sfx.coin(); spawnBurst(c.x,c.y,'#ffd54a',12);
+      if(S.combo>=3)addText(c.x,c.y-24,'+'+pts+(S.combo>=5?' 🔥×'+S.combo:''),'#ffd54a');
+      unlock('coin1'); if(S.coins>=25)unlock('coin25'); if(S.combo>=5)unlock('combo5');
+      coinz.splice(i,1);
     }
   }
   S.score+=dtg*(slow<1?4:10)*S.difficulty;
+  if(S.comboT>0){ S.comboT-=dtg; if(S.comboT<=0)S.combo=0; }
+  if(S.t>=60)unlock('alive60'); if(S.t>=120)unlock('alive120'); if(S.score>=1000)unlock('score1000');
+  // player trail
+  S.trail.push({x:player.x,y:player.y-player.h/2,l:.45}); if(S.trail.length>40)S.trail.shift();
+  for(let i=S.trail.length-1;i>=0;i--){ S.trail[i].l-=dtg; if(S.trail[i].l<=0)S.trail.splice(i,1); }
 
   // particles & texts
   for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=500*dt; p.l-=dt*1.8; if(p.l<=0)parts.splice(i,1); }
@@ -344,8 +402,7 @@ function draw(){
   const g=cx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,`hsl(${S.hue},45%,10%)`); g.addColorStop(1,`hsl(${(S.hue+40)%360},55%,20%)`);
   cx.fillStyle=g; cx.fillRect(0,0,W,H);
-  cx.fillStyle='#fff';
-  for(const s of stars){ const a=.3+.7*Math.abs(Math.sin(S.t*2+s.tw)); cx.globalAlpha=a*.8; cx.fillRect(s.x*W,s.y*H,s.s,s.s); }
+  for(const s of stars){ const layer=s.s>1.4?2:1; const yy=(s.y*H + S.t*8*layer)%H; const a=.3+.7*Math.abs(Math.sin(S.t*2+s.tw)); cx.globalAlpha=a*.8/layer; cx.fillStyle='#fff'; cx.fillRect(s.x*W,yy,s.s,s.s); }
   cx.globalAlpha=1;
 
   cx.save();
@@ -365,6 +422,8 @@ function draw(){
   for(const p of parts){ cx.globalAlpha=Math.max(0,p.l); cx.fillStyle=p.c; cx.fillRect(p.x-3,p.y-3,6,6); }
   cx.globalAlpha=1;
 
+  for(const t of S.trail){ cx.globalAlpha=t.l*.5; cx.fillStyle=`hsl(${S.hue},80%,60%)`; cx.beginPath(); cx.arc(t.x,t.y,player.h*.3*t.l,0,6.283); cx.fill(); }
+  cx.globalAlpha=1;
   if(!(S.inv>0&&Math.floor(S.inv*12)%2===0)){
     cx.save(); cx.translate(player.x,player.y-player.h/2);
     cx.font=`${player.h}px serif`; cx.textAlign='center'; cx.textBaseline='middle';
@@ -398,6 +457,7 @@ function draw(){
   cx.fillStyle='rgba(255,255,255,.75)'; cx.font='18px Tahoma';
   cx.fillText('⏱️ '+Math.floor(S.t)+' ث', 14, 102);
   if(S.daily){ cx.fillStyle='#7ee08a'; cx.fillText('📅 تحدي النهاردة', 14, 130); }
+  if(S.combo>=3){ cx.textAlign='right'; cx.fillStyle='#ff9a3c'; cx.font='bold 22px Tahoma'; cx.fillText('🔥 ×'+S.combo, W-14, 132); cx.textAlign='left'; }
 
   // law bar
   const barW=Math.min(W-40,420), barX=(W-barW)/2, barY=140;
@@ -417,6 +477,10 @@ function draw(){
   // boss timer hint
   if(S.running&&S.nextBossIn<6&&S.nextBossIn>0){ cx.fillStyle='#ff5555'; cx.font='bold 20px Tahoma'; cx.textAlign='center';
     cx.fillText('🏔️ الجبل جاي بعد '+Math.ceil(S.nextBossIn), W/2, barY+56); }
+
+  const vg=cx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.35)');
+  cx.fillStyle=vg; cx.fillRect(0,0,W,H);
 
   // banner
   if(S.banner&&S.bannerT>0){
@@ -463,6 +527,8 @@ requestAnimationFrame(loop);
         if(S.over){ deaths++; if(deaths>=3)break; startGame(false); }
       }
       draw();
+      const cardLen=(function(){try{return makeCard();}catch(e){return -1;}})();
+      console.log('AUTOTEST_CARD_LEN='+cardLen+' ach='+Object.keys(S.ach).length+'/'+Object.keys(ACH_NAMES).length+' unlocked='+Object.keys(S.ach).join(','));
       console.log('AUTOTEST_DONE score='+Math.floor(S.score)+' coins='+S.coins+' deaths='+deaths+' maxRocks='+maxRocks+' bosses='+bosses+' comboFrames='+combos+' lawsSeen='+[...lawsSeen].join(',')+' texts='+texts.length);
     }catch(err){ console.log('AUTOTEST_JS_ERROR: '+err.message+' @ '+(err.stack||'').split('\n')[1]); }
   },300);
