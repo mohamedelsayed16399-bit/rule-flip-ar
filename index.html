@@ -8,7 +8,7 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body { width:100%; height:100%; overflow:hidden; background:#0a0a1a; font-family:'Segoe UI',Tahoma,Arial,sans-serif; touch-action:none; user-select:none; }
   #game { display:block; width:100%; height:100%; }
-  .overlay { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(5,5,20,.92); z-index:10; text-align:center; padding:20px; overflow-y:auto; }
+  .overlay { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(5,5,20,.68); z-index:10; text-align:center; padding:20px; overflow-y:auto; }
   .overlay h1 { color:#ffd54a; font-size:clamp(30px,8vw,58px); margin-bottom:8px; text-shadow:0 0 24px rgba(255,213,74,.5); }
   .overlay h2 { color:#fff; font-size:clamp(16px,4.6vw,26px); margin-bottom:12px; }
   .overlay p { color:#aab; font-size:clamp(13px,3.8vw,17px); line-height:1.8; max-width:420px; }
@@ -41,7 +41,7 @@
   <h1>⚖️ القانون اتغير</h1>
   <h2>كل كام ثانية قانون جديد.. هتعيش قد إيه؟</h2>
   <div id="challengeNote" class="hidden"></div>
-  <p>تحرك يمين وشمال (أسهم أو دوس على نص الشاشة).<br>اهرب من الصخور ☄️ ولمّ الفلوس 💰.<br>13 قانون ممكن يقلبوا عليك، وساعات قانونين مع بعض!</p>
+  <p>تحرك يمين وشمال (أسهم أو دوس على نص الشاشة).<br>اهرب من الصخور ☄️ ولمّ الفلوس 💰.<br>17 قانون ممكن يقلبوا عليك، وساعات 2 أو 3 مع بعض!</p>
   <p class="lawlist" id="statLine"></p>
   <p class="lawlist" id="achLine"></p>
   <div class="lawlist">❤️ 3 قلوب &nbsp;•&nbsp; 🏔️ الجبل بييجي كل 45 ثانية &nbsp;•&nbsp; 😅 النجاة بأعجوبة = نقاط</div>
@@ -72,7 +72,7 @@
 const cv = document.getElementById('game');
 const cx = cv.getContext('2d');
 let W=0, H=0, DPR=1;
-function resize(){ DPR=Math.min(window.devicePixelRatio||1,2); W=window.innerWidth; H=window.innerHeight; cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+'px'; cv.style.height=H+'px'; cx.setTransform(DPR,0,0,DPR,0,0); }
+function resize(){ DPR=Math.min(window.devicePixelRatio||1,1.5); W=window.innerWidth; H=window.innerHeight; cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+'px'; cv.style.height=H+'px'; cx.setTransform(DPR,0,0,DPR,0,0); }
 window.addEventListener('resize',resize); resize();
 
 // ---------- RNG (daily challenge uses a seeded one) ----------
@@ -260,6 +260,7 @@ function drawPlayerShape(){
   const moving=Math.abs(player.v)>30;
   const lp=moving?S.t*16:0;
   cx.save(); cx.translate(player.x,player.y);
+  cx.rotate(Math.max(-.2,Math.min(.2,player.v*.00022)));
   const squash=1+(moving?Math.sin(lp)*0.04:Math.sin(S.t*3)*0.02);
   cx.scale(player.face<0?-1:1,1);
   // legs
@@ -271,13 +272,14 @@ function drawPlayerShape(){
   const g=cx.createLinearGradient(0,-ph,0,0);
   g.addColorStop(0,st.c1); g.addColorStop(1,st.c2);
   cx.fillStyle=g;
-  rr(-pw/2,-ph*1.02* squash>0? -ph*0.98: -ph, pw, ph*.86, pw*.32);
-  cx.beginPath(); cx.roundRect(-pw/2,-ph*.98,pw,ph*.86* squash, pw*.34); cx.fill();
+  cx.beginPath(); cx.roundRect(-pw/2,-ph*.98,pw,ph*.86*squash, pw*.34); cx.fill();
   cx.strokeStyle='rgba(0,0,0,.25)'; cx.lineWidth=2; cx.stroke();
-  // eyes
-  const ey=-ph*.62;
-  cx.fillStyle='#fff'; cx.beginPath(); cx.arc(-pw*.14,ey,pw*.13,0,6.283); cx.arc(pw*.17,ey,pw*.13,0,6.283); cx.fill();
-  cx.fillStyle='#1a1a2a'; cx.beginPath(); cx.arc(-pw*.14+pw*.05,ey+1,pw*.06,0,6.283); cx.arc(pw*.17+pw*.05,ey+1,pw*.06,0,6.283); cx.fill();
+  // eyes (blink every ~3.7s)
+  const ey=-ph*.62, blink=(S.t%3.7)<0.12;
+  if(blink){ cx.strokeStyle='#1a1a2a'; cx.lineWidth=2.5;
+    cx.beginPath(); cx.moveTo(-pw*.24,ey); cx.lineTo(-pw*.04,ey); cx.moveTo(pw*.07,ey); cx.lineTo(pw*.27,ey); cx.stroke(); }
+  else { cx.fillStyle='#fff'; cx.beginPath(); cx.arc(-pw*.14,ey,pw*.13,0,6.283); cx.arc(pw*.17,ey,pw*.13,0,6.283); cx.fill();
+    cx.fillStyle='#1a1a2a'; cx.beginPath(); cx.arc(-pw*.14+pw*.05,ey+1,pw*.06,0,6.283); cx.arc(pw*.17+pw*.05,ey+1,pw*.06,0,6.283); cx.fill(); }
   // mouth
   cx.strokeStyle='rgba(0,0,0,.5)'; cx.lineWidth=2; cx.beginPath(); cx.arc(pw*.02,-ph*.4,pw*.1,.15*Math.PI,.85*Math.PI); cx.stroke();
   // accessory
@@ -310,7 +312,7 @@ const S={
   windDir:1, shieldLeft:0,
   nextBossIn:45, bossWarn:0, bossKind:0,
   combo:0, comboT:0, lawsSeenCount:0, level:1, startHigh:0,
-  magnetT:0, slowT:0, heartT:0, world:-1, powersGot:0,
+  magnetT:0, slowT:0, heartT:0, world:-1, powersGot:0, demo:false, musT:0, musStep:0,
   ach:{}, trail:[], stats:{games:0,coins:0,bestT:0},
   high:+(localStorage.getItem('rf_high')||0),
   skin:localStorage.getItem('rf_skin')||'🏃',
@@ -332,6 +334,17 @@ function touchSet(e){ const r=cv.getBoundingClientRect(); let l=false,rr=false;
 cv.addEventListener('touchstart',e=>{e.preventDefault();touchSet(e);},{passive:false});
 cv.addEventListener('touchmove',e=>{e.preventDefault();touchSet(e);},{passive:false});
 cv.addEventListener('touchend',e=>{e.preventDefault();touchSet(e);},{passive:false});
+
+// ---------- Demo bot ----------
+function botDir(){
+  let threat=null, tD=1e9;
+  for(const r of rocks){ const approaching=(r.vy>0&&r.y<player.y)||(r.vy<0&&r.y>player.y); if(!approaching)continue;
+    const d=Math.abs(r.y-player.y); const dx=Math.abs(r.x-player.x); if(dx<r.s+player.w&&d<tD){ tD=d; threat=r; } }
+  let dir=0;
+  if(threat&&tD<260){ dir=threat.x>player.x?-1:1; if(player.x<70)dir=1; if(player.x>W-70)dir=-1; }
+  else { let bc=null,bD=1e9; for(const c of coinz){ const d=Math.hypot(c.x-player.x,c.y-player.y); if(d<bD){bD=d;bc=c;} } if(bc)dir=bc.x>player.x+10?1:bc.x<player.x-10?-1:0; }
+  return dir;
+}
 
 // ---------- UI ----------
 const ACH_NAMES={coin1:'أول جنيه 💰',coin25:'25 جنيه في جيم 🤑',alive60:'عشت دقيقة كاملة ⏱️',alive120:'عشت دقيقتين 🕐',boss1:'نجوت من الجبل 🏔️',combo5:'5 فلوس ورا بعض 🔥',score1000:'1000 نقطة ⭐',laws6:'شفت 6 قوانين في جيم ⚖️',challenger:'كسرت تحدي صاحبك 🎯',daily:'لعبت تحدي النهاردة 📅',twins:'نجوت من التوأم 👯'};
@@ -361,9 +374,9 @@ if(S.high>0)$('startHi').textContent='🏆 أعلى نتيجة: '+S.high;
 // challenge link ?c=SCORE
 (function(){ const m=location.search.match(/[?&]c=(\d+)/); if(m){ S.challenge=+m[1]; const n=$('challengeNote'); n.textContent=`🎯 صاحبك جاب ${S.challenge} نقطة.. تقدر تكسره؟`; n.classList.remove('hidden'); } })();
 
-$('startBtn').onclick=()=>{ sfx.start(); startGame(false); };
-$('dailyBtn').onclick=()=>{ sfx.start(); startGame(true); };
-$('againBtn').onclick=()=>{ sfx.start(); startGame(S.daily); };
+$('startBtn').onclick=()=>{ sfx.start(); S.demo=false; startGame(false); };
+$('dailyBtn').onclick=()=>{ sfx.start(); S.demo=false; startGame(true); };
+$('againBtn').onclick=()=>{ sfx.start(); S.demo=false; startGame(S.daily); };
 $('resumeBtn').onclick=()=>togglePause();
 $('pauseBtn').onclick=()=>togglePause();
 $('muteBtn').onclick=()=>{ muted=!muted; $('muteBtn').textContent=muted?'🔇':'🔊'; };
@@ -416,6 +429,7 @@ function startGame(daily){
 }
 
 function endGame(){
+  if(S.demo){ startGame(false); S.demo=true; return; }
   S.over=true; S.running=false; sfx.over();
   const sc=Math.floor(S.score);
   S.stats.coins+=S.coins; if(S.t>S.stats.bestT)S.stats.bestT=Math.floor(S.t);
@@ -512,8 +526,10 @@ function update(dt){
   if(S.bossWarn>0){ S.bossWarn-=dt; if(Math.ceil(S.bossWarn+dt)!==Math.ceil(S.bossWarn)&&S.bossWarn>0)sfx.tick(); }
   if(S.nextBossIn<=0){ spawnBoss(); S.nextBossIn=45; }
 
+  // music: quiet pentatonic pulse
+  S.musT-=dtg; if(S.musT<=0){ S.musT=.42; const scale=[0,3,5,7,10]; const n=scale[S.musStep%5]+(Math.floor(S.musStep/10)%2?12:0); beep(220*Math.pow(2,n/12),.18,'triangle',.04); S.musStep++; }
   // player
-  let dir=((keys['ArrowRight']||keys['d']?1:0)-(keys['ArrowLeft']||keys['a']?1:0))+touchDir;
+  let dir=S.demo?botDir():((keys['ArrowRight']||keys['d']?1:0)-(keys['ArrowLeft']||keys['a']?1:0))+touchDir;
   if(has('mirror'))dir=-dir;
   if(dir!==0)player.face=dir;
   const spd=430*(has('giant')?1.15:has('tiny')?1.35:1);
@@ -668,7 +684,7 @@ function draw(){
 
   if(S.flash>0){ cx.globalAlpha=S.flash*1.6; cx.fillStyle=S.flashColor; cx.fillRect(0,0,W,H); cx.globalAlpha=1; }
 
-  if(!S.running)return;
+  if(!S.running||S.demo)return;
 
   // HUD
   cx.textBaseline='middle';
@@ -725,6 +741,9 @@ function draw(){
     cx.restore(); cx.globalAlpha=1;
   }
 }
+
+// boot into attract-mode demo behind the menu
+startGame(false); S.demo=true; $('topbar').classList.add('hidden'); $('startScreen').classList.remove('hidden');
 
 // ---------- Loop ----------
 let last=performance.now();
