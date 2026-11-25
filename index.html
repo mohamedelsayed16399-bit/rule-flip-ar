@@ -116,8 +116,15 @@ const LAWS=[
  {id:'shield',  name:'🛡️ درع!', desc:'ضربة واحدة ببلاش!', dur:9},
  {id:'swarm',   name:'🐝 سرب صغار!', desc:'صخور صغيرة سريعة من كل حتة!', dur:8},
  {id:'ice',     name:'🧊 أرضية متزحلقة!', desc:'الحركة بتزحلق!', dur:9},
+ {id:'flip',    name:'🔃 الدنيا مقلوبة!', desc:'الشاشة بالعكس!', dur:8},
 ];
-const LAW_EMOJI={gravity:'🙃',mirror:'🔁',speed:'🔥',slow:'🐌',dark:'🌑',giant:'🦣',rain:'☄️',luck:'🍀',earthq:'🌋',wind:'💨',tiny:'🐜',coinrain:'🤑',shield:'🛡️',swarm:'🐝',ice:'🧊'};
+const WORLDS=[
+ {name:'الصحراء',e:'🏜️',h:35},
+ {name:'البحر',e:'🌊',h:200},
+ {name:'الغابة',e:'🌲',h:130},
+ {name:'الفضاء',e:'🌌',h:270},
+];
+const LAW_EMOJI={gravity:'🙃',mirror:'🔁',speed:'🔥',slow:'🐌',dark:'🌑',giant:'🦣',rain:'☄️',luck:'🍀',earthq:'🌋',wind:'💨',tiny:'🐜',coinrain:'🤑',shield:'🛡️',swarm:'🐝',ice:'🧊',flip:'🔃'};
 
 // ---------- Skins ----------
 const SKINS=[{e:'🏃',need:0},{e:'🚀',need:500},{e:'🐪',need:1500},{e:'👑',need:3000}];
@@ -133,6 +140,7 @@ const S={
   windDir:1, shieldLeft:0,
   nextBossIn:45, bossWarn:0, bossKind:0,
   combo:0, comboT:0, lawsSeenCount:0, level:1, startHigh:0,
+  magnetT:0, slowT:0, heartT:0, world:-1, powersGot:0,
   ach:{}, trail:[],
   high:+(localStorage.getItem('rf_high')||0),
   skin:localStorage.getItem('rf_skin')||'🏃',
@@ -140,7 +148,7 @@ const S={
 };
 const has=id=>S.laws.some(l=>l.id===id);
 const player={x:0,y:0,w:46,h:46,baseW:46,face:1,v:0};
-let rocks=[], coinz=[], parts=[], texts=[], stars=[];
+let rocks=[], coinz=[], parts=[], texts=[], powers=[], stars=[];
 for(let i=0;i<90;i++) stars.push({x:Math.random(),y:Math.random(),s:Math.random()*1.8+.4,tw:Math.random()*6.28});
 
 // ---------- Input ----------
@@ -224,6 +232,7 @@ function startGame(daily){
   S.windDir=1; S.shieldLeft=0; S.nextBossIn=45; S.bossWarn=0;
   rocks=[]; coinz=[]; parts=[]; texts=[];
   S.trail=[]; S.combo=0; S.comboT=0; S.lawsSeenCount=0; S.level=1; S.startHigh=S.high; player.v=0;
+  S.magnetT=0; S.slowT=0; S.heartT=0; S.world=-1; S.powersGot=0; powers=[];
   player.x=W/2; player.w=player.baseW; player.h=player.baseW;
   $('startScreen').classList.add('hidden');
   $('overScreen').classList.add('hidden');
@@ -291,10 +300,22 @@ function spawnBoss(){
   S.bannerT=2.4; sfx.boss(); S.shake=.5;
 }
 
+// ---------- Power-ups ----------
+const POWERS=[{id:'shield',e:'🛡️',w:4},{id:'magnet',e:'🧲',w:3},{id:'slow',e:'⏱️',w:2},{id:'heart',e:'❤️',w:1}];
+function pickPower(){ let tot=0; for(const p of POWERS)tot+=p.w; let r=R()*tot; for(const p of POWERS){ r-=p.w; if(r<=0)return p; } return POWERS[0]; }
+function applyPower(id){
+  S.powersGot++;
+  if(id==='shield'){ S.shieldLeft++; addText(player.x,player.y-100,'🛡️ درع زيادة!','#4aa8ff'); }
+  else if(id==='magnet'){ S.magnetT=10; addText(player.x,player.y-100,'🧲 مغناطيس 10 ثواني!','#ff9a3c'); }
+  else if(id==='slow'){ S.slowT=4; addText(player.x,player.y-100,'⏱️ الزمن باطئ 4 ثواني!','#8fd'); }
+  else if(id==='heart'){ if(S.hearts<4){ S.hearts++; addText(player.x,player.y-100,'❤️ قلب زيادة!','#ff5555'); } else { S.score+=50; addText(player.x,player.y-100,'❤️ مليان! +50','#ff5555'); } }
+  beep(700,.1,'sine',.15); setTimeout(()=>beep(1050,.12,'sine',.13),80);
+}
+
 // ---------- Update ----------
-let spawnR=0, spawnC=0;
+let spawnR=0, spawnC=0, spawnP=7;
 function update(dt){
-  const slow=has('slow')?0.5:1;
+  const slow=(has('slow')||S.slowT>0)?0.5:1;
   const fast=has('speed')?1.7:1;
   const dtg=dt*slow;
   S.t+=dtg; S.difficulty=1+S.t/25;
@@ -342,6 +363,10 @@ function update(dt){
     coinz.push({x:30+R()*(W-60),y:fromBottom?H+30:-30,vy:(fromBottom?-1:1)*(120+R()*70)*fast,s:16,ph:R()*6.28});
   }
 
+  spawnP-=dtg; if(spawnP<=0){ spawnP=9+R()*7;
+    const fromBottom=has('gravity'); const pw0=pickPower();
+    powers.push({x:40+R()*(W-80),y:fromBottom?H+30:-30,vy:(fromBottom?-1:1)*110*fast,s:18,ph:R()*6.28,kind:pw0.id,e:pw0.e});
+  }
   const pw=player.w;
   // rocks
   for(let i=rocks.length-1;i>=0;i--){ const r=rocks[i]; r.y+=r.vy*dtg; r.rot+=r.vr*dtg;
@@ -368,7 +393,7 @@ function update(dt){
   }
   // coins
   for(let i=coinz.length-1;i>=0;i--){ const c=coinz[i]; c.ph+=dtg*6;
-    if(has('luck')){ const dx=player.x-c.x, dy=(player.y-30)-c.y, d=Math.hypot(dx,dy); if(d<180&&d>1){ c.x+=dx/d*340*dtg; c.y+=dy/d*340*dtg; } }
+    if(has('luck')||S.magnetT>0){ const dx=player.x-c.x, dy=(player.y-30)-c.y, d=Math.hypot(dx,dy); if(d<180&&d>1){ c.x+=dx/d*340*dtg; c.y+=dy/d*340*dtg; } }
     c.y+=c.vy*dtg;
     if(c.y<-60||c.y>H+60){ coinz.splice(i,1); continue; }
     const dx=c.x-player.x, dy=c.y-(player.y-player.h/2);
@@ -385,12 +410,24 @@ function update(dt){
   }
   S.score+=dtg*(slow<1?4:10)*S.difficulty;
   if(S.comboT>0){ S.comboT-=dtg; if(S.comboT<=0)S.combo=0; }
+  if(S.slowT>0)S.slowT-=dt; if(S.magnetT>0)S.magnetT-=dt;
+  if(S.hearts===1){ S.heartT-=dt; if(S.heartT<=0){ S.heartT=1.3; beep(70,.18,'sine',.22); } }
+  // world progression: new world every 3 levels
+  const wIdx=Math.floor((S.level-1)/3)%WORLDS.length;
+  if(wIdx!==S.world){ const first=S.world===-1; S.world=wIdx;
+    if(!first){ S.banner={txt:'🗺️ دخلت عالم: '+WORLDS[wIdx].e+' '+WORLDS[wIdx].name,sub:'جو جديد.. نفس الجنون'}; S.bannerT=2; sfx.law(); } }
   if(S.t>=60)unlock('alive60'); if(S.t>=120)unlock('alive120'); if(S.score>=1000)unlock('score1000');
   if(S.t>=S.level*30){ S.level++; S.score+=50; S.banner={txt:'📈 المستوى '+S.level+'!','sub':'+50 نقطة.. واللعبة بتنجن أكتر'}; S.bannerT=1.6; beep(980,.1,'triangle',.14); setTimeout(()=>beep(1240,.12,'triangle',.14),100); }
   // player trail
   S.trail.push({x:player.x,y:player.y-player.h/2,l:.45}); if(S.trail.length>40)S.trail.shift();
   for(let i=S.trail.length-1;i>=0;i--){ S.trail[i].l-=dtg; if(S.trail[i].l<=0)S.trail.splice(i,1); }
 
+  // power-ups
+  for(let i=powers.length-1;i>=0;i--){ const q=powers[i]; q.ph+=dtg*5; q.y+=q.vy*dtg;
+    if(q.y<-60||q.y>H+60){ powers.splice(i,1); continue; }
+    const dx=q.x-player.x, dy=q.y-(player.y-player.h/2);
+    if(Math.hypot(dx,dy)<(q.s+pw*.5)*.95){ applyPower(q.kind); powers.splice(i,1); }
+  }
   // particles & texts
   for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=500*dt; p.l-=dt*1.8; if(p.l<=0)parts.splice(i,1); }
   for(let i=texts.length-1;i>=0;i--){ const t=texts[i]; t.y-=40*dt; t.l-=dt; if(t.l<=0)texts.splice(i,1); }
@@ -414,9 +451,11 @@ function draw(){
 
   cx.save();
   if(S.shake>0)cx.translate((R()-.5)*S.shake*26,(R()-.5)*S.shake*26);
+  if(has('flip')&&S.running){ cx.translate(W/2,H/2); cx.rotate(Math.PI); cx.translate(-W/2,-H/2); }
 
+  if(S.world>=0){ cx.globalAlpha=.10; cx.font='280px serif'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText(WORLDS[S.world].e, W/2, H*.38); cx.globalAlpha=1; }
   cx.fillStyle='rgba(255,255,255,.08)'; cx.fillRect(0,H-46,W,46);
-  cx.fillStyle=`hsl(${S.hue},60%,45%)`; cx.fillRect(0,H-46,W,4);
+  cx.fillStyle=`hsl(${S.world>=0?WORLDS[S.world].h:S.hue},60%,45%)`; cx.fillRect(0,H-46,W,4);
 
   for(const c of coinz){ cx.save(); cx.translate(c.x,c.y); cx.scale(Math.abs(Math.cos(c.ph))*.5+.5,1);
     cx.font=`${c.s*2}px serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('💰',0,0); cx.restore(); }
@@ -426,6 +465,10 @@ function draw(){
     cx.beginPath(); for(let i=0;i<7;i++){ const a=i/7*6.283, rr=r.s*(0.8+((i*37)%10)/22); cx[i?'lineTo':'moveTo'](Math.cos(a)*rr,Math.sin(a)*rr); } cx.closePath(); cx.fill(); cx.stroke();
     if(r.boss){ cx.font=`${r.s}px serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('😈',0,0); }
     cx.restore(); }
+  for(const q of powers){ const pulse=1+.15*Math.sin(q.ph*2);
+    cx.save(); cx.translate(q.x,q.y);
+    cx.fillStyle='rgba(255,255,255,.18)'; cx.beginPath(); cx.arc(0,0,q.s*1.5*pulse,0,6.283); cx.fill();
+    cx.font=`${q.s*2}px serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText(q.e,0,0); cx.restore(); }
   for(const p of parts){ cx.globalAlpha=Math.max(0,p.l); cx.fillStyle=p.c; cx.fillRect(p.x-3,p.y-3,6,6); }
   cx.globalAlpha=1;
 
@@ -437,6 +480,7 @@ function draw(){
     cx.font=`${player.h}px serif`; cx.textAlign='center'; cx.textBaseline='middle';
     cx.save(); if(player.face<0)cx.scale(-1,1); cx.fillText(S.skin,0,0); cx.restore();
     if(S.shieldLeft>0){ cx.strokeStyle='rgba(74,168,255,.9)'; cx.lineWidth=3; cx.beginPath(); cx.arc(0,0,player.h*.75,0,6.283); cx.stroke(); }
+    if(S.magnetT>0){ cx.strokeStyle='rgba(255,154,60,'+(0.4+0.3*Math.sin(S.t*8))+')'; cx.lineWidth=2; cx.beginPath(); cx.arc(0,0,player.h*.95,0,6.283); cx.stroke(); }
     cx.restore();
   }
   // floating texts
@@ -532,13 +576,14 @@ requestAnimationFrame(loop);
         if(threat&&tD<260){ dir=threat.x>player.x?-1:1; if(player.x<70)dir=1; if(player.x>W-70)dir=-1; }
         else { let bc=null,bD=1e9; for(const c of coinz){ const d=Math.hypot(c.x-player.x,c.y-player.y); if(d<bD){bD=d;bc=c;} } if(bc)dir=bc.x>player.x+10?1:bc.x<player.x-10?-1:0; }
         keys['ArrowLeft']=dir<0; keys['ArrowRight']=dir>0;
+        if(location.search.includes('god'))S.inv=9;
         if(S.running&&!S.over){ update(1/60); for(const l of S.laws)lawsSeen.add(l.id); if(S.laws.length>1)combos++; maxRocks=Math.max(maxRocks,rocks.length); bosses+=rocks.filter(r=>r.boss&&!r._c).length; rocks.forEach(r=>r._c=true); }
         if(S.over){ deaths++; if(deaths>=3)break; startGame(false); }
       }
       draw();
       const cardLen=(function(){try{return makeCard();}catch(e){return -1;}})();
       console.log('AUTOTEST_CARD_LEN='+cardLen+' ach='+Object.keys(S.ach).length+'/'+Object.keys(ACH_NAMES).length+' unlocked='+Object.keys(S.ach).join(','));
-      console.log('AUTOTEST_DONE score='+Math.floor(S.score)+' coins='+S.coins+' deaths='+deaths+' maxRocks='+maxRocks+' bosses='+bosses+' comboFrames='+combos+' lawsSeen='+[...lawsSeen].join(',')+' texts='+texts.length);
+      console.log('AUTOTEST_DONE score='+Math.floor(S.score)+' coins='+S.coins+' deaths='+deaths+' maxRocks='+maxRocks+' bosses='+bosses+' comboFrames='+combos+' lawsSeen='+[...lawsSeen].join(',')+' powers='+S.powersGot+' world='+S.world+' texts='+texts.length);
     }catch(err){ console.log('AUTOTEST_JS_ERROR: '+err.message+' @ '+(err.stack||'').split('\n')[1]); }
   },300);
 })();
