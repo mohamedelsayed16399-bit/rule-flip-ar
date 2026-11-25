@@ -41,7 +41,7 @@
   <h1>⚖️ القانون اتغير</h1>
   <h2>كل كام ثانية قانون جديد.. هتعيش قد إيه؟</h2>
   <div id="challengeNote" class="hidden"></div>
-  <p>تحرك يمين وشمال (أسهم أو دوس على نص الشاشة).<br>اهرب من الصخور ☄️ ولمّ الفلوس 💰.<br>17 قانون ممكن يقلبوا عليك، وساعات 2 أو 3 مع بعض!</p>
+  <p>تحرك يمين وشمال (أسهم أو دوس على نص الشاشة).<br>اهرب من الصخور ☄️ ولمّ الفلوس 💰.<br>17 قانون ممكن يقلبوا عليك، وساعات 2 أو 3 مع بعض!<br>دوس مسافة (أو دبل-تاب على الموبايل) للاندفاعة ⚡.. بتعدّي من الصخور!</p>
   <p class="lawlist" id="statLine"></p>
   <p class="lawlist" id="achLine"></p>
   <div class="lawlist">❤️ 3 قلوب &nbsp;•&nbsp; 🏔️ الجبل بييجي كل 45 ثانية &nbsp;•&nbsp; 😅 النجاة بأعجوبة = نقاط</div>
@@ -242,16 +242,25 @@ function drawBackground(){
   // ambient critters per world
   if(wIdx===0){ cx.strokeStyle='rgba(40,16,30,.8)'; cx.lineWidth=2.5;
     for(let i=0;i<3;i++){ const bx=((i*260+drift*2.2)%(W+80)+(W+80))%(W+80)-40, by=H*(.18+.07*i)+Math.sin(S.t*1.7+i)*10, fl=Math.sin(S.t*9+i*2)*5;
-      cx.beginPath(); cx.moveTo(bx-11,by-fl); cx.quadraticCurveTo(bx,by+4,bx,by); cx.quadraticCurveTo(bx,by+4,bx+11,by-fl); cx.stroke(); } }
+      cx.beginPath(); cx.moveTo(bx-11,by-fl); cx.quadraticCurveTo(bx,by+4,bx,by); cx.quadraticCurveTo(bx,by+4,bx+11,by-fl); cx.stroke(); }
+    for(let i=0;i<6;i++){ const gx=((i*401+drift*7)%(W+200)+(W+200))%(W+200)-100, gy=H*(.3+.09*i);
+      cx.strokeStyle='rgba(230,180,120,.14)'; cx.lineWidth=3; cx.beginPath(); cx.moveTo(gx,gy); cx.lineTo(gx+90,gy-8); cx.stroke(); } }
   else if(wIdx===1){ cx.fillStyle='rgba(10,50,70,.8)';
     for(let i=0;i<4;i++){ const fw=14+(i%3)*7, fx2=((i*300+drift*1.6*(i%2?1:-1))%(W+120)+(W+120))%(W+120)-60, fy=H*(.3+.13*i)+Math.sin(S.t*2+i)*14, dr=i%2?1:-1;
       cx.save(); cx.translate(fx2,fy); cx.scale(dr,1);
       cx.beginPath(); cx.ellipse(0,0,fw,fw*.45,0,0,6.283); cx.fill();
-      cx.beginPath(); cx.moveTo(-fw,0); cx.lineTo(-fw-9,-6); cx.lineTo(-fw-9,6); cx.closePath(); cx.fill(); cx.restore(); } }
+      cx.beginPath(); cx.moveTo(-fw,0); cx.lineTo(-fw-9,-6); cx.lineTo(-fw-9,6); cx.closePath(); cx.fill(); cx.restore(); }
+    for(let i=0;i<10;i++){ const px2=(i*137+Math.sin(S.t*.5+i)*20+W)%W, py2=(i*89+drift*.8)%H;
+      cx.globalAlpha=.3+.4*Math.abs(Math.sin(S.t*1.5+i)); cx.fillStyle='#9fe8d8';
+      cx.beginPath(); cx.arc(px2,py2,1.6,0,6.283); cx.fill(); }
+    cx.globalAlpha=1; }
   else if(wIdx===2){ for(let i=0;i<8;i++){ const lx=(i*151+Math.sin(S.t*.8+i)*50+W)%W, ly=(i*173+drift*2.2)%H, la=Math.sin(S.t*2+i);
       cx.save(); cx.translate(lx,ly); cx.rotate(la);
       cx.fillStyle=i%2?'rgba(120,160,60,.5)':'rgba(90,140,70,.5)';
-      cx.beginPath(); cx.ellipse(0,0,7,3.5,0,0,6.283); cx.fill(); cx.restore(); } }
+      cx.beginPath(); cx.ellipse(0,0,7,3.5,0,0,6.283); cx.fill(); cx.restore(); }
+    cx.strokeStyle='rgba(160,200,255,.18)'; cx.lineWidth=1.5;
+    for(let i=0;i<14;i++){ const rx2=(i*97)%W, ry2=(i*131+drift*11)%H;
+      cx.beginPath(); cx.moveTo(rx2,ry2); cx.lineTo(rx2-4,ry2+16); cx.stroke(); } }
   else if(wIdx===3){ for(let i=0;i<2;i++){ const per=9+i*7, ph=(S.t+i*4.5)%per;
       if(ph<1.1){ const k=ph/1.1, sx2=W*(.2+.5*i)+k*W*.35, sy2=H*.1+k*H*.3;
         const sg=cx.createLinearGradient(sx2-k*90,sy2-k*70,sx2,sy2);
@@ -264,7 +273,30 @@ function drawBackground(){
     cx.restore(); }
   else { cx.strokeStyle='rgba(30,10,16,.9)'; cx.lineWidth=2.5;
     for(let i=0;i<3;i++){ const bx=((i*240+drift*2.6)%(W+80)+(W+80))%(W+80)-40, by=H*(.15+.08*i)+Math.sin(S.t*2.1+i)*12, fl=Math.sin(S.t*11+i*2)*6;
-      cx.beginPath(); cx.moveTo(bx-12,by-fl); cx.quadraticCurveTo(bx-4,by+5,bx,by); cx.quadraticCurveTo(bx+4,by+5,bx+12,by-fl); cx.stroke(); } }
+      cx.beginPath(); cx.moveTo(bx-12,by-fl); cx.quadraticCurveTo(bx-4,by+5,bx,by); cx.quadraticCurveTo(bx+4,by+5,bx+12,by-fl); cx.stroke(); }
+    for(let i=0;i<10;i++){ const ax2=(i*167+Math.sin(S.t+i)*24+W)%W, ay2=(i*113+drift*2)%H;
+      cx.globalAlpha=.3; cx.fillStyle='#9a9a9a'; cx.fillRect(ax2,ay2,2.5,2.5); }
+    cx.globalAlpha=1; }
+}
+
+function drawFalcon(r){
+  if(r.warm>0){ cx.save(); cx.strokeStyle='rgba(255,60,60,'+(0.4+0.3*Math.sin(S.t*14))+')'; cx.lineWidth=3; cx.setLineDash([12,10]);
+    cx.beginPath(); cx.moveTo(0,r.y); cx.lineTo(W,r.y); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle='rgba(255,80,80,.95)'; cx.font='bold 26px serif'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText('🦅',r.vx>0?30:W-30,r.y-4); cx.restore(); return; }
+  cx.save(); cx.translate(r.x,r.y); cx.scale(r.vx>0?1:-1,1);
+  const fl=Math.sin(S.t*22)*.5;
+  cx.fillStyle='#8a5a2a'; cx.beginPath(); cx.moveTo(-34,0); cx.lineTo(-52,-8); cx.lineTo(-52,8); cx.closePath(); cx.fill();
+  cx.fillStyle='#a06a34';
+  cx.save(); cx.rotate(-fl*.9); cx.beginPath(); cx.ellipse(4,-20,34,10,-.4,0,6.283); cx.fill(); cx.restore();
+  const g=cx.createLinearGradient(0,-14,0,14); g.addColorStop(0,'#caa06a'); g.addColorStop(1,'#7a4a22');
+  cx.fillStyle=g; cx.beginPath(); cx.ellipse(0,0,36,13,0,0,6.283); cx.fill();
+  cx.fillStyle='#e8d8b8'; cx.beginPath(); cx.arc(32,-4,10,0,6.283); cx.fill();
+  cx.fillStyle='#f0a020'; cx.beginPath(); cx.moveTo(40,-6); cx.lineTo(52,-2); cx.lineTo(40,1); cx.closePath(); cx.fill();
+  cx.fillStyle='#1a1a2a'; cx.beginPath(); cx.arc(34,-6,2.6,0,6.283); cx.fill();
+  cx.fillStyle='#b88040';
+  cx.save(); cx.rotate(fl); cx.beginPath(); cx.ellipse(2,-8,30,9,-.35,0,6.283); cx.fill(); cx.restore();
+  cx.restore();
 }
 
 function drawRockShape(r){
@@ -361,7 +393,7 @@ const S={
   windDir:1, shieldLeft:0,
   nextBossIn:45, bossWarn:0, bossKind:0,
   combo:0, comboT:0, lawsSeenCount:0, level:1, startHigh:0,
-  magnetT:0, slowT:0, heartT:0, world:-1, powersGot:0, demo:false, musT:0, musStep:0, feverT:0, feverUsed:false, feverCount:0,
+  magnetT:0, slowT:0, heartT:0, world:-1, powersGot:0, demo:false, musT:0, musStep:0, feverT:0, feverUsed:false, feverCount:0, dashCD:0, dashCount:0,
   ach:{}, trail:[], stats:{games:0,coins:0,bestT:0},
   high:+(localStorage.getItem('rf_high')||0),
   skin:localStorage.getItem('rf_skin')||'🏃',
@@ -374,7 +406,7 @@ for(let i=0;i<90;i++) stars.push({x:Math.random(),y:Math.random(),s:Math.random(
 
 // ---------- Input ----------
 const keys={};
-window.addEventListener('keydown',e=>{ keys[e.key]=true; if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault(); if(e.key==='p'||e.key==='P')togglePause(); });
+window.addEventListener('keydown',e=>{ keys[e.key]=true; if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault(); if(e.key==='p'||e.key==='P')togglePause(); if(e.key===' '&&!e.repeat)doDash(player.face); });
 window.addEventListener('keyup',e=>{ keys[e.key]=false; });
 let touchDir=0, touchL=false, touchR=false;
 function touchSet(e){ const r=cv.getBoundingClientRect(); let l=false,rr=false;
@@ -383,6 +415,10 @@ function touchSet(e){ const r=cv.getBoundingClientRect(); let l=false,rr=false;
 cv.addEventListener('touchstart',e=>{e.preventDefault();touchSet(e);},{passive:false});
 cv.addEventListener('touchmove',e=>{e.preventDefault();touchSet(e);},{passive:false});
 cv.addEventListener('touchend',e=>{e.preventDefault();touchSet(e);},{passive:false});
+let lastTapT=0,lastTapS=0;
+cv.addEventListener('touchstart',e=>{ const now=performance.now(); const side=touchR?1:touchL?-1:0;
+  if(side&&now-lastTapT<320&&side===lastTapS)doDash(side);
+  if(side){ lastTapT=now; lastTapS=side; } },{passive:false});
 
 // ---------- Demo bot ----------
 function botDir(){
@@ -396,7 +432,7 @@ function botDir(){
 }
 
 // ---------- UI ----------
-const ACH_NAMES={coin1:'أول جنيه 💰',coin25:'25 جنيه في جيم 🤑',alive60:'عشت دقيقة كاملة ⏱️',alive120:'عشت دقيقتين 🕐',boss1:'نجوت من الجبل 🏔️',combo5:'5 فلوس ورا بعض 🔥',score1000:'1000 نقطة ⭐',laws6:'شفت 6 قوانين في جيم ⚖️',challenger:'كسرت تحدي صاحبك 🎯',daily:'لعبت تحدي النهاردة 📅',twins:'نجوت من التوأم 👯'};
+const ACH_NAMES={coin1:'أول جنيه 💰',coin25:'25 جنيه في جيم 🤑',alive60:'عشت دقيقة كاملة ⏱️',alive120:'عشت دقيقتين 🕐',boss1:'نجوت من الجبل 🏔️',combo5:'5 فلوس ورا بعض 🔥',score1000:'1000 نقطة ⭐',laws6:'شفت 6 قوانين في جيم ⚖️',challenger:'كسرت تحدي صاحبك 🎯',daily:'لعبت تحدي النهاردة 📅',twins:'نجوت من التوأم 👯',falcon:'نجوت من الصقر 🦅',dash25:'25 اندفاعة ⚡'};
 try{ S.ach=JSON.parse(localStorage.getItem('rf_ach')||'{}'); }catch(e){ S.ach={}; }
 try{ S.stats=JSON.parse(localStorage.getItem('rf_stats')||'{"games":0,"coins":0,"bestT":0}'); }catch(e){}
 function unlock(id){ if(S.ach[id])return; S.ach[id]=1; try{localStorage.setItem('rf_ach',JSON.stringify(S.ach));}catch(e){}
@@ -468,7 +504,7 @@ function startGame(daily){
   S.windDir=1; S.shieldLeft=0; S.nextBossIn=45; S.bossWarn=0;
   rocks=[]; coinz=[]; parts=[]; texts=[];
   S.trail=[]; S.combo=0; S.comboT=0; S.lawsSeenCount=0; S.level=1; S.startHigh=S.high; player.v=0;
-  S.magnetT=0; S.slowT=0; S.heartT=0; S.world=-1; S.powersGot=0; powers=[]; S.feverT=0; S.feverUsed=false;
+  S.magnetT=0; S.slowT=0; S.heartT=0; S.world=-1; S.powersGot=0; powers=[]; S.feverT=0; S.feverUsed=false; S.dashCD=0;
   player.x=W/2; player.w=player.baseW; player.h=player.baseW;
   $('startScreen').classList.add('hidden');
   $('overScreen').classList.add('hidden');
@@ -501,6 +537,17 @@ function endGame(){
 function spawnBurst(x,y,c,n){ for(let i=0;i<n;i++) parts.push({x,y,vx:(R()-.5)*320,vy:(R()-.5)*320-80,l:1,c}); }
 function addText(x,y,txt,c){ texts.push({x,y,txt,c:c||'#8fd',l:1.4}); }
 
+function doDash(dir){
+  if(!S.running||S.over||S.paused||S.demo||S.dashCD>0)return;
+  dir=dir||player.face||1;
+  player.x=Math.max(player.w/2,Math.min(W-player.w/2,player.x+dir*170));
+  player.v=dir*430; player.face=dir;
+  S.dashCD=2.5; S.dashCount++; S.inv=Math.max(S.inv,.35);
+  if(S.dashCount>=25)unlock('dash25');
+  for(let i=0;i<10;i++)parts.push({x:player.x-dir*i*16,y:player.y-player.h/2,vx:-dir*30,vy:(R()-.5)*60,l:.5,c:'rgba(255,255,255,.7)',dust:1});
+  beep(300,.12,'sawtooth',.12,500);
+}
+
 function applySize(){ player.w=player.baseW*(has('giant')?1.7:has('tiny')?0.6:1); player.h=player.w; }
 
 function pickLaw(){
@@ -526,14 +573,18 @@ function pickLaw(){
 
 function spawnBoss(){
   const fromBottom=has('gravity');
-  S.bossKind=(S.bossKind||0)%2;
+  S.bossKind=(S.bossKind||0)%3;
   if(S.bossKind===0){
     rocks.push({boss:true, bonus:100, x:W/2, y:fromBottom?H+110:-110, vy:(fromBottom?-1:1)*95, s:85, rot:0, vr:.5, zig:0, counted:false});
     S.banner={txt:'🏔️ الجبل جاي!', sub:'اهرب منه.. النجاة منه بـ 100 نقطة'};
-  } else {
+  } else if(S.bossKind===1){
     rocks.push({boss:true, twins:1, bonus:50, x:W*.3, y:fromBottom?H+80:-80, vy:(fromBottom?-1:1)*115, s:55, rot:0, vr:1, zig:0, counted:false});
     rocks.push({boss:true, twins:1, bonus:50, x:W*.7, y:fromBottom?H+80:-80, vy:(fromBottom?-1:1)*115, s:55, rot:0, vr:-1, zig:2, counted:false});
     S.banner={txt:'👯 التوأم جاي!', sub:'صخرتين مع بعض.. كل وحدة بـ 50 نقطة'};
+  } else {
+    const side=R()<.5?-1:1;
+    rocks.push({boss:true, falcon:true, bonus:75, x:side<0?-80:W+80, y:H-150-R()*180, vx:-side*(520+S.difficulty*30), vy:0, s:40, rot:0, vr:0, warm:1.5, zig:0, counted:false});
+    S.banner={txt:'🦅 الصقر جاي!', sub:'هيعدي بسرعة على الخط الأحمر.. ابعد عنه! النجاة بـ 75 نقطة'};
   }
   S.bossKind++;
   S.bannerT=2.4; sfx.boss(); S.shake=.5;
@@ -610,17 +661,18 @@ function update(dt){
   }
   const pw=player.w;
   // rocks
-  for(let i=rocks.length-1;i>=0;i--){ const r=rocks[i]; r.y+=r.vy*dtg; r.rot+=r.vr*dtg;
+  for(let i=rocks.length-1;i>=0;i--){ const r=rocks[i];
+    if(r.falcon){ if(r.warm>0)r.warm-=dtg; else r.x+=r.vx*dtg; } else { r.y+=r.vy*dtg; r.rot+=r.vr*dtg; }
     if(has('chaos')&&!r.boss)r.x+=Math.sin(r.rot*2.7+r.y*.008)*80*dtg;
-    if(r.boss){ r.zig=(r.zig||0)+dtg; r.x=W/2+Math.sin(r.zig*1.2)*(W*.28); }
+    if(r.boss&&!r.falcon){ r.zig=(r.zig||0)+dtg; r.x=W/2+Math.sin(r.zig*1.2)*(W*.28); }
     const dirn=r.vy>0?1:-1;
     // near-miss bonus: passed player's height without being hit
-    if(!r.counted && ((dirn>0&&r.y>player.y)||(dirn<0&&r.y<player.y))){ r.counted=true;
+    if(!r.counted && (r.falcon?((r.vx>0&&r.x>player.x)||(r.vx<0&&r.x<player.x)):((dirn>0&&r.y>player.y)||(dirn<0&&r.y<player.y)))){ r.counted=true;
       const ndx=Math.abs(r.x-player.x);
       if(ndx<(r.s+pw)*(r.boss?1.2:.95)){ S.score+=r.boss?0:3; if(!r.boss){ addText(player.x,player.y-90,'😅 عدّت! +3','#8fd'); sfx.near(); } }
     }
-    if(r.y<-160||r.y>H+160){
-      if(r.boss&&!r.failed){ const b=r.bonus||100; S.score+=b; addText(W/2,H*.4,(r.twins?'👯 +':'🏔️ نجوت من الجبل! +')+b,'#ffd54a'); sfx.bossPass(); unlock(r.twins?'twins':'boss1'); }
+    if(r.y<-160||r.y>H+160||(r.falcon&&(r.x<-170||r.x>W+170))){
+      if(r.boss&&!r.failed){ const b=r.bonus||100; S.score+=b; addText(W/2,H*.4,(r.falcon?'🦅 عدّى الصقر! +':r.twins?'👯 +':'🏔️ نجوت من الجبل! +')+b,'#ffd54a'); sfx.bossPass(); unlock(r.falcon?'falcon':r.twins?'twins':'boss1'); }
       rocks.splice(i,1); continue; }
     const dx=r.x-player.x, dy=r.y-(player.y-player.h/2);
     const hitK=r.boss?.5:.42;
@@ -648,12 +700,14 @@ function update(dt){
       S.coins+=val; S.score+=pts; sfx.coin(); spawnBurst(c.x,c.y,'#ffd54a',12);
       if(S.combo>=3)addText(c.x,c.y-24,'+'+pts+(S.combo>=5?' 🔥×'+S.combo:''),'#ffd54a');
       unlock('coin1'); if(S.coins>=25)unlock('coin25'); if(S.combo>=5)unlock('combo5');
+      if(S.combo%10===0)addText(W/2,H*.42,'🔥🔥 كومبو ×'+S.combo+'!!','#ff9a3c');
       coinz.splice(i,1);
     }
   }
   S.score+=dtg*(slow<1?4:10)*S.difficulty;
   if(S.comboT>0){ S.comboT-=dtg; if(S.comboT<=0){ S.combo=0; S.feverUsed=false; } }
   if(S.feverT>0)S.feverT-=dt;
+  if(S.dashCD>0)S.dashCD-=dt;
   if(S.slowT>0)S.slowT-=dt; if(S.magnetT>0)S.magnetT-=dt;
   if(S.hearts===1){ S.heartT-=dt; if(S.heartT<=0){ S.heartT=1.3; beep(70,.18,'sine',.22); } }
   // world progression: new world every 3 levels
@@ -703,7 +757,7 @@ function draw(){
   cx.fillStyle=`hsl(${wh2},70%,55%)`; cx.fillRect(0,H-46,W,4);
 
   for(const c of coinz)drawCoinShape(c);
-  for(const r of rocks)drawRockShape(r);
+  for(const r of rocks){ if(r.falcon)drawFalcon(r); else drawRockShape(r); }
   for(const q of powers){ const pulse=1+.15*Math.sin(q.ph*2);
     cx.save(); cx.translate(q.x,q.y);
     cx.fillStyle='rgba(255,255,255,.18)'; cx.beginPath(); cx.arc(0,0,q.s*1.5*pulse,0,6.283); cx.fill();
@@ -719,6 +773,8 @@ function draw(){
     cx.save(); cx.translate(player.x,player.y-player.h/2);
     if(S.shieldLeft>0){ cx.strokeStyle='rgba(74,168,255,.9)'; cx.lineWidth=3; cx.beginPath(); cx.arc(0,0,player.h*.75,0,6.283); cx.stroke(); }
     if(S.magnetT>0){ cx.strokeStyle='rgba(255,154,60,'+(0.4+0.3*Math.sin(S.t*8))+')'; cx.lineWidth=2; cx.beginPath(); cx.arc(0,0,player.h*.95,0,6.283); cx.stroke(); }
+    if(S.dashCD<=0){ const pu=.7+.3*Math.sin(S.t*6); cx.fillStyle='rgba(255,220,90,'+pu+')'; cx.font='bold 18px Tahoma'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('⚡',0,-player.h*1.0); }
+    else { cx.strokeStyle='rgba(255,255,255,.55)'; cx.lineWidth=3; cx.beginPath(); cx.arc(0,-player.h*1.0,9,-Math.PI/2,-Math.PI/2+(1-S.dashCD/2.5)*6.283); cx.stroke(); }
     if(S.feverT>0){ const fg=cx.createRadialGradient(0,0,player.h*.3,0,0,player.h*1.5);
       fg.addColorStop(0,'rgba(255,213,74,0)'); fg.addColorStop(.7,'rgba(255,180,40,'+(0.35+0.2*Math.sin(S.t*10))+')'); fg.addColorStop(1,'rgba(255,180,40,0)');
       cx.fillStyle=fg; cx.beginPath(); cx.arc(0,0,player.h*1.5,0,6.283); cx.fill(); }
@@ -737,6 +793,11 @@ function draw(){
   }
 
   if(S.flash>0){ cx.globalAlpha=S.flash*1.6; cx.fillStyle=S.flashColor; cx.fillRect(0,0,W,H); cx.globalAlpha=1; }
+
+  if(S.hearts===1&&S.running&&!S.demo){ const p2=.5+.5*Math.sin(S.t*4.5);
+    const dg=cx.createRadialGradient(W/2,H/2,Math.min(W,H)*.28,W/2,H/2,Math.max(W,H)*.72);
+    dg.addColorStop(0,'rgba(255,0,0,0)'); dg.addColorStop(1,'rgba(255,30,30,'+(0.22+0.16*p2)+')');
+    cx.fillStyle=dg; cx.fillRect(0,0,W,H); }
 
   if(!S.running||S.demo)return;
 
@@ -830,6 +891,7 @@ requestAnimationFrame(loop);
         if(threat&&tD<260){ dir=threat.x>player.x?-1:1; if(player.x<70)dir=1; if(player.x>W-70)dir=-1; }
         else { let bc=null,bD=1e9; for(const c of coinz){ const d=Math.hypot(c.x-player.x,c.y-player.y); if(d<bD){bD=d;bc=c;} } if(bc)dir=bc.x>player.x+10?1:bc.x<player.x-10?-1:0; }
         keys['ArrowLeft']=dir<0; keys['ArrowRight']=dir>0;
+        if(threat&&tD<120&&S.dashCD<=0)doDash(dir||player.face);
         if(location.search.includes('god'))S.inv=9;
         if(S.running&&!S.over){ update(1/60); for(const l of S.laws)lawsSeen.add(l.id); if(S.laws.length>1)combos++; maxRocks=Math.max(maxRocks,rocks.length); bosses+=rocks.filter(r=>r.boss&&!r._c).length; rocks.forEach(r=>r._c=true); }
         if(S.over){ deaths++; if(deaths>=3)break; startGame(false); }
@@ -837,7 +899,7 @@ requestAnimationFrame(loop);
       draw();
       const cardLen=(function(){try{return makeCard();}catch(e){return -1;}})();
       console.log('AUTOTEST_CARD_LEN='+cardLen+' ach='+Object.keys(S.ach).length+'/'+Object.keys(ACH_NAMES).length+' unlocked='+Object.keys(S.ach).join(','));
-      console.log('AUTOTEST_DONE score='+Math.floor(S.score)+' coins='+S.coins+' deaths='+deaths+' maxRocks='+maxRocks+' bosses='+bosses+' comboFrames='+combos+' lawsSeen='+[...lawsSeen].join(',')+' powers='+S.powersGot+' world='+S.world+' fevers='+(S.feverCount||0)+' texts='+texts.length);
+      console.log('AUTOTEST_DONE score='+Math.floor(S.score)+' coins='+S.coins+' deaths='+deaths+' maxRocks='+maxRocks+' bosses='+bosses+' comboFrames='+combos+' lawsSeen='+[...lawsSeen].join(',')+' powers='+S.powersGot+' world='+S.world+' fevers='+(S.feverCount||0)+' dashes='+(S.dashCount||0)+' texts='+texts.length);
     }catch(err){ console.log('AUTOTEST_JS_ERROR: '+err.message+' @ '+(err.stack||'').split('\n')[1]); }
   },300);
 })();
