@@ -73,7 +73,7 @@ const ACH={
  hajj:["🕋","حجّ بيت الله","أدّي الحج"],wed:["💍","اتجوزت","اتجوز"],kids:["👶","بيت عامر","خلّف ٣ أولاد أو أكتر"],doc:["🩺","دكتور","اشتغل دكتور"],
  boss:["🏢","صاحب شركة","افتح شركتك"],fame:["⭐","مشهور","وصّل الشهرة ٨٠"],prison:["⛓️","ورا الشمس","اتسجن"],mil:["🪖","خدمت الوطن","خلّص الجيش"],
  trav:["✈️","رحّالة","سافر ٥ مرات"],pass:["🕊️","حياة بسيطة","مت وإنت راضي (سعادة ٧٠+)"],book:["📚","كاتب","اطبع كتاب"],lotto:["🎰","حظّ","اكسب جائزة كبيرة"],
- fam:["👨‍👩‍👧‍👦","جد وجدة","بقى عندك أحفاد"],gm:["🏆","المتفوق","جيب مجموع ٩٥٪+ في الثانوية"]
+ fam:["👨‍👩‍👧‍👦","جد وجدة","بقى عندك أحفاد"],poor:["🌱","من الصفر","ابدأ في أسرة فقيرة وعدّي ٥٠٠ ألف"],villa:["🏡","فيلا الساحل","اشتري فيلا"],all:["🧩","متكامل","صحة وذكاء وجمال وعلاقات ٧٠+ بعد الأربعين"],faith:["🌙","القلب المطمئن","إيمان ٩٠٪ بعد الأربعين"],abroad:["🛫","مغترب","اشتغل بره مصر"],gm:["🏆","المتفوق","جيب مجموع ٩٥٪+ في الثانوية"]
 };
 function ach(k){if(META_.ach[k])return;META_.ach[k]=1;saveMeta();toast("🏅 إنجاز: "+ACH[k][1]);}
 let SND=localStorage.getItem('life-snd')!=='0';let AC=null;
@@ -305,6 +305,11 @@ function ageUp(){
  // مشروع
  if(has("owner")){G.flags.bizY=(G.flags.bizY||0)+1;const ch=R();if(ch<.65){const g=Math.round(ri(40,120)*1000*G.flags.bizLvl);money(g,"أرباح المشروع");}else if(ch<.85){money(-ri(10,40)*1000,"خسارة في المشروع");}else{addLog("المشروع انهار.","bad");G.tags=G.tags.filter(t=>t!=="owner");}if(G.flags.bizY>=4&&G.flags.bizLvl<3){G.flags.bizLvl++;addLog("🏢 مشروعك كبر وبقى شركة!","big");if(G.flags.bizLvl>=3)ach("boss");}}
  if(G.money>=1000000)ach("rich");
+ if(G.wealthLvl<0&&G.money>=500000)ach("poor");
+ if(G.assets.some(a=>a.id==="villa"))ach("villa");
+ if(G.age>=40&&G.health>=70&&G.smarts>=70&&G.looks>=70&&G.social>=70)ach("all");
+ if(G.age>=40&&G.faith>=90)ach("faith");
+ if(G.flags.abroad)ach("abroad");
  // خطوبة→جواز
  const f=rel("fiance");if(f&&G.age-G.flags.engY>=2&&f.bond>35){marry();}
  else if(f&&f.bond<=35&&R()<.5){G.rels=G.rels.filter(r=>r!==f);addLog("💔 الخطوبة اتفسخت.","bad");stat("happy",-15);}
@@ -371,7 +376,7 @@ function shareCard(){
  c.fillStyle="#ffc857";c.textAlign="center";c.direction="rtl";c.font="bold 64px Tahoma,sans-serif";c.fillText("🕊️ عِش حياتك",540,120);
  c.fillStyle="#fff";c.font="bold 90px Tahoma,sans-serif";c.fillText(G.name+" "+G.surname,540,290);
  c.font="46px Tahoma,sans-serif";c.fillStyle="#a99fcb";c.fillText("عاش "+N(G.age)+" سنة في "+G.city,540,370);
- const rows=[["الوظيفة",jobName()],["التعليم",EDUN[eduRank()]],["الفلوس",fmt(G.money)],["الأولاد",N(G.kids)],["السعادة",G.happy+"٪"],["الإنجازات",N(Object.keys(META_.ach).length)+"/"+N(Object.keys(ACH).length)]];
+ const rows=[["الوظيفة",jobName()],["التعليم",EDUN[eduRank()]],["الفلوس",fmt(G.money)],["الأولاد",N(G.kids)],["السعادة",N(G.happy)+"٪"],["الإنجازات",N(Object.keys(META_.ach).length)+"/"+N(Object.keys(ACH).length)]];
  c.font="bold 54px Tahoma,sans-serif";
  rows.forEach((x,i)=>{const y=520+i*110;c.fillStyle="#2a2147";c.fillRect(90,y-60,900,90);c.fillStyle="#a99fcb";c.textAlign="right";c.fillText(x[0],960,y+5);c.fillStyle="#fff";c.textAlign="left";c.fillText(x[1],120,y+5);});
  c.textAlign="center";c.fillStyle="#ffc857";c.font="bold 80px Tahoma,sans-serif";c.fillText("⭐ "+N(score()),540,1260);
@@ -567,6 +572,6 @@ function init(){
   modal(`<h2>أهلًا من تاني</h2><div class="tx">لقيت حياة محفوظة: <b>${G.name}</b> عمر ${N(G.age)}.</div><button class="ch" data-a="c">كمّل ▶️</button><button class="ch" data-a="n">حياة جديدة</button>`,a=>{closeM();if(a==="n"){startScreen();}});return;}}catch(e){}
  startScreen();
 }
-window.__dbg={get G(){return G;},ageUp,newLife};
+window.__dbg={get G(){return G;},ageUp,newLife,share:shareCard};
 init();
 </script></body></html>
