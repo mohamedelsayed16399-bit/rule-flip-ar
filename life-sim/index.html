@@ -57,6 +57,7 @@ const MN=["أحمد","محمد","محمود","مصطفى","عمر","يوسف","�
 const FN=["فاطمة","مريم","نور","سلمى","هدى","منى","ياسمين","دينا","آية","رنا","إيمان","سارة","هبة","نهى","ريم","جميلة","مي","أسماء"];
 const SUR=["السيد","عبد الله","الشريف","حجازي","منصور","فوزي","النجار","عيسى","الجمل","شاهين","بدوي","رمضان"];
 const CITIES=["القاهرة","الإسكندرية","طنطا","المنصورة","أسيوط","الأقصر","أسوان","بورسعيد","الزقازيق","دمياط"];
+const TRAITS={amb:['🔥','طموح'],lazy:['🛋️','كسول'],soc:['🗣️','اجتماعي'],shy:['🤫','خجول'],pious:['🕌','متدين'],brave:['🦁','شجاع'],lucky:['🍀','محظوظ'],greedy:['🪙','حريص على الفلوس']};
 const mname=()=>pick(MN),fname=()=>pick(FN);
 let G=null;
 const SAVE="life-sim-ar-v1", META="life-sim-ar-meta";
@@ -72,7 +73,9 @@ const ACH={
  fam:["👨‍👩‍👧‍👦","جد وجدة","بقى عندك أحفاد"],gm:["🏆","المتفوق","جيب مجموع ٩٥٪+ في الثانوية"]
 };
 function ach(k){if(META_.ach[k])return;META_.ach[k]=1;saveMeta();toast("🏅 إنجاز: "+ACH[k][1]);}
-function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",2200);}
+let SND=localStorage.getItem('life-snd')!=='0';let AC=null;
+function beep(f=520,d=.08){if(!SND)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type='sine';g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+function toast(t){beep(880,.12);const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",2200);}
 
 /* ---------- الحياة ---------- */
 const STAGES=[[0,"رضيع","👶"],[3,"طفل","🧒"],[6,"تلميذ","🎒"],[13,"مراهق","🧑"],[18,"شاب","🧑‍🎓"],[30,"بالغ","🧔"],[50,"كبير","👨‍🦳"],[65,"مسن","👴"]];
@@ -87,10 +90,13 @@ function newLife(name,male){
   gpa:0,tracks:[],skills:{},crimeRec:0,mil:male?"pending":"none",startBonus:bonus,debt:0,deaths:[]};
  const f=mname()+" "+pick(SUR);
  G.surname=pick(SUR);
+ G.traits=[];while(G.traits.length<2){const t=pick(Object.keys(TRAITS));if(!G.traits.includes(t)&&!(t==='soc'&&G.traits.includes('shy'))&&!(t==='shy'&&G.traits.includes('soc')))G.traits.push(t);}
+ if(G.traits.includes('soc'))G.social=cl(G.social+15);if(G.traits.includes('pious'))G.faith=cl(G.faith+25);if(G.traits.includes('shy'))G.social=cl(G.social-12);if(G.traits.includes('lucky'))G.happy=cl(G.happy+8);
  G.rels.push({id:"dad",t:"أب",n:mname()+" "+G.surname,ic:"👨",bond:ri(50,90),age:ri(24,40),alive:true});
  G.rels.push({id:"mom",t:"أم",n:fname()+" "+G.surname,ic:"👩",bond:ri(60,95),age:ri(22,38),alive:true});
  const sib=ri(0,3);for(let i=0;i<sib;i++){const m=R()<.5;G.rels.push({id:"sib"+i,t:m?"أخ":"أخت",n:(m?mname():fname())+" "+G.surname,ic:m?"👦":"👧",bond:ri(30,85),age:ri(0,10),alive:true,sib:true});}
  if(bonus>0){G.money+=bonus;addLog("🕊️ ورثت من حياتك السابقة "+fmt(bonus)+" أمانة.","good");META_.legacy=0;saveMeta();}
+ addLog('سماتك: '+G.traits.map(t=>TRAITS[t][0]+' '+TRAITS[t][1]).join('، '),'big');
  addLog(`وُلدت في ${G.city}، في ${G.famName}. ${G.male?"ولد":"بنت"} جديد اسمه ${name} 🍼`,"big");
  addLog(`والدك ${G.rels[0].n} ووالدتك ${G.rels[1].n}${sib?` ولك ${sib} إخوات`:" وانت الوحيد"}.`);
  flush();render();save();
@@ -145,7 +151,7 @@ E({id:"army",a:21,b:26,w:30,ok:()=>G.male&&G.mil==="pending"&&G.age>=21,t:"جا�
 E({id:"proposal",a:21,b:38,w:8,ok:()=>!rel("spouse")&&G.age>=22,t:"أمك بتعرّفك على بنت/ابن ناس محترمين: «بس تيجي تشوفها/ـه».",c:[{t:"أروح أشوف",f(){startDating(true);}},{t:"مش دلوقتي",f(){rel("mom").bond=cl(rel("mom").bond-4);}}]});
 E({id:"promo",a:22,b:60,w:7,ok:()=>G.job&&G.jobYears>=2,t:"المدير بيرشحك للترقية. محتاج تعمل مجهود زيادة.",c:[{t:"أشتغل فوق طاقتي",f(){stat("stress",12);G.perf+=15;if(R()<.6){G.salary=Math.round(G.salary*1.25);addLog("🎉 اترقيت! مرتبك زاد ٢٥٪","good");}}},{t:"أنا ماشي بالراحة",f(){G.perf-=4;}}]});
 E({id:"fired",a:22,b:62,w:4,ok:()=>G.job&&G.perf<40,t:"الشركة بتقلل العمالة. أداءك مش كويس.",c:[{t:"اترجاهم يخلوني",f(){if(R()<.4)addLog("سيبوك المرة دي.");else loseJob("اتفصلت");}},{t:"أمشي بكرامتي",f(){loseJob("استقلت");}}]});
-E({id:"lotto",a:18,b:80,w:1.2,t:"لقيت ورقة يانصيب قديمة في جيبك…",c:[{t:"أصرفها 🎰",f(){if(R()<.1){const w=ri(1,6)*100000;money(w,"كسبت يانصيب!");ach("lotto");}else addLog("مفيش حاجة.");}}]});
+E({id:"lotto",a:18,b:80,w:1.2,t:"لقيت ورقة يانصيب قديمة في جيبك…",c:[{t:"أصرفها 🎰",f(){if(R()<(has('lucky')||G.traits.includes('lucky')?.25:.1)){const w=ri(1,6)*100000;money(w,"كسبت يانصيب!");ach("lotto");}else addLog("مفيش حاجة.");}}]});
 E({id:"hajj",a:40,b:80,w:4,ok:()=>!G.flags.hajj&&G.money>150000&&G.faith>45,t:"نفسك تحج بيت الله الحرام. التكلفة حوالي ١٥٠ ألف.",c:[{t:"أحج 🕋",f(){G.flags.hajj=1;money(-150000,"رحلة الحج");G.faith=cl(G.faith+25);stat("happy",15);stat("stress",-20);ach("hajj");addLog("رجعت بقلب خفيف. «حج مبرور».","big");}},{t:"لما أقدر",f(){}}]});
 E({id:"tax",a:25,b:90,w:3,ok:()=>G.money>200000,t:"مصلحة الضرايب بتطلب مراجعة دفاترك.",c:[{t:"أدفع الضريبة",f(){money(-Math.round(G.money*.04),"ضرايب");}},{t:"أتهرب",f(){if(R()<.4){G.crimeRec++;money(-Math.round(G.money*.12),"غرامة تهرب");}else addLog("عدت بسلام.");}}]});
 E({id:"inherit",a:30,b:85,w:2,ok:()=>G.wealthLvl>=1,t:"قريب بعيد من العيلة اتوفى وساب لك ورث.",c:[{t:"أقبل الميراث",f(){money(ri(50,300)*1000,"ميراث");}}]});
@@ -249,6 +255,10 @@ function ageUp(){
  stat("happy",(50-G.stress)/25);
  if(G.age>=14)stat("looks",G.age>50?-.8:0);
  if(G.age>25&&R()<.35)stat("smarts",-.5);
+ if(G.traits&&G.traits.includes('amb')&&G.job)G.perf=cl(G.perf+2);
+ if(G.traits&&G.traits.includes('lazy')){G.perf=cl(G.perf-1);stat('stress',-2);}
+ if(G.traits&&G.traits.includes('greedy')&&G.money>0)money(G.money*.02);
+ if(G.traits&&G.traits.includes('brave')&&R()<.04)stat('smarts',0);
  // مدرسة
  if(G.age===6){startSchool();addLog("🎒 دخلت المدرسة الابتدائية.","big");}
  if(G.school){
@@ -363,7 +373,8 @@ let tab="life";
 const TABS=[["life","📜","الحياة"],["act","⚡","أنشطة"],["rel","👪","العلاقات"],["work","💼","شغل ودراسة"],["own","🏠","ممتلكات"],["me","🏅","إنجازات"]];
 function buildBar(){$("#bar").innerHTML=TABS.map(t=>`<button data-t="${t[0]}"><span>${t[1]}</span>${t[2]}</button>`).join("");}
 $("#bar").addEventListener("click",e=>{const b=e.target.closest("[data-t]");if(!b)return;tab=b.dataset.t;render();});
-$("#age").addEventListener("click",()=>{if(!G||G.dead||$("#modal").classList.contains("on"))return;ageUp();});
+$("#age").addEventListener("click",()=>{if(!G||G.dead||$("#modal").classList.contains("on"))return;beep(440,.05);ageUp();});
+$("#mb").addEventListener("click",()=>beep(660,.04));
 function bar(l,v,c){return `<div class="st">${l} <b>${N(v)}</b><div class="bar"><i style="width:${v}%;background:${c}"></i></div></div>`;}
 function render(){
  if(!G)return;
@@ -411,9 +422,9 @@ function render(){
   h+="</div>";
  }
  if(tab==="me"){
-  h+=`<div class="card"><b>🧬 حياتك دي</b><div class="pill">الإيمان ${G.faith}٪ · الشهرة ${G.fame}٪ · سفر ${G.travel} مرات · سجل جنائي ${G.crimeRec}</div><div class="pill">عدد الحيوات: ${N(META_.lives)} · أفضل نتيجة ${N(META_.best)}</div></div><div class="card"><b>🏅 الإنجازات (${Object.keys(META_.ach).length}/${Object.keys(ACH).length})</b>`;
+  h+=`<div class="card"><b>🧬 حياتك دي</b><div>${(G.traits||[]).map(t=>`<span class="tag">${TRAITS[t][0]} ${TRAITS[t][1]}</span>`).join('')}</div><div class="pill">الإيمان ${G.faith}٪ · الشهرة ${G.fame}٪ · سفر ${G.travel} مرات · سجل جنائي ${G.crimeRec}</div><div class="pill">عدد الحيوات: ${N(META_.lives)} · أفضل نتيجة ${N(META_.best)}</div></div><div class="card"><b>🏅 الإنجازات (${Object.keys(META_.ach).length}/${Object.keys(ACH).length})</b>`;
   Object.entries(ACH).forEach(([k,a])=>h+=`<div class="row ach ${META_.ach[k]?"got":""}"><div class="ic">${a[0]}</div><div class="t">${a[1]}<small>${a[2]}</small></div></div>`);
-  h+=`</div><button class="btn" id="reset">🗑️ ابدأ حياة جديدة (هتفقد دي)</button>`;
+  h+=`</div><button class="btn" id="snd">${SND?'🔊 الصوت شغال':'🔇 الصوت مقفول'}</button> <button class="btn" id="reset">🗑️ ابدأ حياة جديدة (هتفقد دي)</button>`;
  }
  m.innerHTML=h;
  $("#age").style.display=G.dead?"none":"block";
@@ -424,6 +435,7 @@ $("#main").addEventListener("click",e=>{
  if(t.dataset.job){applyJob(JOBS.find(j=>j.id===t.dataset.job));}
  if(t.id==="quit"){loseJob("استقلت");flush();render();save();}
  if(t.id==="phd"){G.school={t:"u",y:1,fac:"grad"};money(-90000);addLog("بدأت دراسات عليا.");G.flags.phd=1;flush();render();save();}
+ if(t.id==="snd"){SND=!SND;localStorage.setItem('life-snd',SND?'1':'0');render();}
  if(t.id==="reset"){if(confirm("متأكد؟ هتفقد الحياة الحالية.")){localStorage.removeItem(SAVE);startScreen();}}
  if(t.dataset.rel){const r=rel(t.dataset.rel);if(G.flags.act===G.age){toast("استنى للسنة الجاية");return;}G.flags.act=G.age;r.bond=cl(r.bond+ri(6,14));stat("happy",4);stat("stress",-3);addLog(`قضيت وقت حلو مع ${r.n}.`,"good");flush();render();save();}
  if(t.dataset.buy){const m={car:["🚗","عربية",250000],house:["🏠","شقة",900000],villa:["🏡","فيلا الساحل",4000000],watch:["⌚","ساعة فاخرة",90000]}[t.dataset.buy];if(G.money<m[2])return;G.money-=m[2];G.assets.push({id:t.dataset.buy,ic:m[0],n:m[1],v:m[2]});stat("happy",8);addLog(`🛍️ اشتريت ${m[1]}.`,"good");if(t.dataset.buy==="house")addLog("مبقاش عليك إيجار.");flush();render();save();}
