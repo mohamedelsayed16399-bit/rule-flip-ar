@@ -42,6 +42,7 @@ input[type=text]{width:100%;padding:12px;border-radius:10px;border:0;background:
 #toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--ac);color:#2a1a00;padding:8px 16px;border-radius:20px;font-weight:700;z-index:20;display:none}
 </style></head><body>
 <div id="top"><div id="av">🧒</div><div><div id="nm">—</div><div id="sub"></div></div><div id="money"></div></div>
+<canvas id="scene" width="720" height="200" style="width:100%;height:100px;display:block"></canvas>
 <div id="stats"></div>
 <div id="main"><div id="log"></div></div>
 <div id="focus"></div>
@@ -363,6 +364,21 @@ function legacy(){return Math.max(0,Math.round(G.money*.3));}
 function score(){
  return Math.round(G.age*8+G.happy*4+G.money/20000+G.rels.filter(r=>r.alive).length*30+Object.keys(META_.ach).length*10+G.kids*40+(G.edu==="uni"?100:0));
 }
+
+function shareCard(){
+ const cv=document.createElement("canvas");cv.width=1080;cv.height=1350;const c=cv.getContext("2d");
+ const g=c.createLinearGradient(0,0,0,1350);g.addColorStop(0,"#3a2a70");g.addColorStop(1,"#1b1530");c.fillStyle=g;c.fillRect(0,0,1080,1350);
+ c.fillStyle="#ffc857";c.textAlign="center";c.direction="rtl";c.font="bold 64px Tahoma,sans-serif";c.fillText("🕊️ عِش حياتك",540,120);
+ c.fillStyle="#fff";c.font="bold 90px Tahoma,sans-serif";c.fillText(G.name+" "+G.surname,540,290);
+ c.font="46px Tahoma,sans-serif";c.fillStyle="#a99fcb";c.fillText("عاش "+N(G.age)+" سنة في "+G.city,540,370);
+ const rows=[["الوظيفة",jobName()],["التعليم",EDUN[eduRank()]],["الفلوس",fmt(G.money)],["الأولاد",N(G.kids)],["السعادة",G.happy+"٪"],["الإنجازات",N(Object.keys(META_.ach).length)+"/"+N(Object.keys(ACH).length)]];
+ c.font="bold 54px Tahoma,sans-serif";
+ rows.forEach((x,i)=>{const y=520+i*110;c.fillStyle="#2a2147";c.fillRect(90,y-60,900,90);c.fillStyle="#a99fcb";c.textAlign="right";c.fillText(x[0],960,y+5);c.fillStyle="#fff";c.textAlign="left";c.fillText(x[1],120,y+5);});
+ c.textAlign="center";c.fillStyle="#ffc857";c.font="bold 80px Tahoma,sans-serif";c.fillText("⭐ "+N(score()),540,1260);
+ c.fillStyle="#a99fcb";c.font="34px Tahoma,sans-serif";c.fillText("جرّب إنت: mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim",540,1315);
+ cv.toBlob(b=>{const f=new File([b],"my-life.png",{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:"حياتي"}).catch(()=>{});}else{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="my-life.png";a.click();}});
+}
+
 function endLife(){
  flush();
  META_.lives++;META_.best=Math.max(META_.best,score());
@@ -377,7 +393,58 @@ function endLife(){
  السعادة: ${G.happy}٪ — الفلوس: ${fmt(G.money)} — الأولاد: ${N(G.kids)}<br>
  بيعيش بعده: ${rels}</div>
  <div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
- <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`,a=>{if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
+ <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`,a=>{if(a==="share"){shareCard();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
+}
+
+
+
+function famTree(){
+ const nd=(r)=>`<div style="display:inline-block;min-width:78px;margin:3px;padding:6px 8px;border-radius:12px;background:${r.alive?"var(--card2)":"#0003"};text-align:center;font-size:12px"><div style="font-size:22px">${r.alive?r.ic:"🪦"}</div>${r.n.split(" ")[0]}<div class="pill">${r.t}</div></div>`;
+ const par=G.rels.filter(r=>r.id==="dad"||r.id==="mom"),sib=G.rels.filter(r=>r.sib),sp=G.rels.filter(r=>r.id==="spouse"||r.id==="fiance"),kids=G.rels.filter(r=>r.kid);
+ const me=`<div style="display:inline-block;min-width:78px;margin:3px;padding:6px 8px;border-radius:12px;background:var(--ac);color:#2a1a00;text-align:center;font-size:12px;font-weight:700"><div style="font-size:22px">${stage(G.age)[2]}</div>${G.name}<div>أنا</div></div>`;
+ return `<div class="card"><b>🌳 شجرة العيلة</b><div style="text-align:center;margin-top:6px">${par.map(nd).join("")}<div class="pill">│</div>${sib.map(nd).join("")}${me}${sp.map(nd).join("")}${kids.length?'<div class="pill">│</div>'+kids.map(nd).join(""):""}</div></div>`;
+}
+
+/* ---------- المشهد ---------- */
+function drawScene(){
+ const cv=$("#scene");if(!cv||!G)return;const c=cv.getContext("2d"),W=720,H=200;
+ const a=G.age,t=a<13?0:a<30?1:a<60?2:3;
+ const sky=[["#7fd0ff","#d8f3ff"],["#ff9d6b","#ffe0a8"],["#5b6bb0","#f2b98f"],["#2b2350","#6c4d8a"]][t];
+ const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,sky[0]);g.addColorStop(1,sky[1]);c.fillStyle=g;c.fillRect(0,0,W,H);
+ // sun / moon
+ c.fillStyle=t===3?"#f4efff":"#fff3b0";c.beginPath();c.arc(90+t*150,50+t*10,t===3?20:28,0,7);c.fill();
+ if(t===3){c.fillStyle="#fff";for(let i=0;i<25;i++){c.fillRect((i*97)%W,(i*53)%110,2,2);}}
+ // pyramids
+ c.fillStyle=t===3?"#3a3050":"#c9a560";[[500,160,90],[590,160,60]].forEach(p=>{c.beginPath();c.moveTo(p[0]-p[2],H-40);c.lineTo(p[0],H-40-p[2]*.9);c.lineTo(p[0]+p[2],H-40);c.fill();});
+ // ground and Nile
+ c.fillStyle=t===3?"#2b3b2f":"#8fcf6a";c.fillRect(0,H-40,W,40);
+ c.fillStyle=t===3?"#2a4a8a":"#4ea8ff";c.fillRect(0,H-14,W,14);
+ // palms
+ [40,330,680].forEach(x=>{c.fillStyle="#7a5230";c.fillRect(x,H-100,8,62);c.fillStyle=t===3?"#2f6a45":"#2e9e57";for(let k=-2;k<=2;k++){c.beginPath();c.ellipse(x+4+k*14,H-102+Math.abs(k)*6,18,6,k*.4,0,7);c.fill();}});
+ // house by wealth
+ const hasV=G.assets.some(x=>x.id==="villa"),hasH=G.assets.some(x=>x.id==="house");
+ const hx=190,hw=hasV?130:hasH?100:70,hh=hasV?62:hasH?52:38;
+ c.fillStyle=hasV?"#f6e7c8":hasH?"#e6d3b3":"#b89a74";c.fillRect(hx,H-40-hh,hw,hh);
+ c.fillStyle=hasV?"#c2542d":"#8a5a3a";c.beginPath();c.moveTo(hx-8,H-40-hh);c.lineTo(hx+hw/2,H-40-hh-26);c.lineTo(hx+hw+8,H-40-hh);c.fill();
+ c.fillStyle="#5a3a22";c.fillRect(hx+hw/2-7,H-40-24,14,24);
+ c.fillStyle="#ffe58a";c.fillRect(hx+10,H-40-hh+12,14,12);if(hw>90)c.fillRect(hx+hw-24,H-40-hh+12,14,12);
+ // car
+ if(G.assets.some(x=>x.id==="car")){c.fillStyle="#d94a4a";c.fillRect(hx+hw+14,H-40-16,48,14);c.fillRect(hx+hw+24,H-40-26,26,12);c.fillStyle="#222";[0,34].forEach(o=>{c.beginPath();c.arc(hx+hw+24+o,H-26,6,0,7);c.fill();});}
+ // person
+ const px=420,sc=a<3?.55:a<13?.75:a<18?.9:1,fy=H-40;
+ const col=G.male?"#3a7bd5":"#d5527a";
+ c.save();c.translate(px,fy);c.scale(sc,sc);
+ c.fillStyle=col;c.fillRect(-9,-44,18,28);
+ c.fillStyle="#222";c.fillRect(-8,-16,6,16);c.fillRect(2,-16,6,16);
+ c.fillStyle="#f1c9a0";c.beginPath();c.arc(0,-54,10,0,7);c.fill();
+ c.fillStyle=a>=60?"#ddd":G.male?"#2b1b10":"#4a2a14";c.beginPath();c.arc(0,-57,10,Math.PI,0);c.fill();
+ if(!G.male&&a>=6){c.fillRect(-11,-57,4,22);c.fillRect(7,-57,4,22);}
+ if(a>=65){c.strokeStyle="#7a5230";c.lineWidth=3;c.beginPath();c.moveTo(16,-30);c.lineTo(16,0);c.stroke();}
+ c.restore();
+ // spouse & kids
+ const sp=rel("spouse");if(sp&&sp.alive){c.fillStyle=G.male?"#d5527a":"#3a7bd5";c.fillRect(px+30,fy-44,18,28);c.fillStyle="#f1c9a0";c.beginPath();c.arc(px+39,fy-54,10,0,7);c.fill();c.fillStyle="#222";c.fillRect(px+31,fy-16,6,16);c.fillRect(px+41,fy-16,6,16);}
+ G.rels.filter(k=>k.kid&&k.alive).slice(0,5).forEach((k,i)=>{const x=px-40-i*22,sz=k.age<5?.4:k.age<13?.6:.85;c.save();c.translate(x,fy);c.scale(sz,sz);c.fillStyle=k.ic==="👦"?"#3ab38a":"#e08a3a";c.fillRect(-8,-44,16,28);c.fillStyle="#f1c9a0";c.beginPath();c.arc(0,-53,9,0,7);c.fill();c.fillStyle="#222";c.fillRect(-7,-16,5,16);c.fillRect(2,-16,5,16);c.restore();});
+ if(G.dead){c.fillStyle="#0007";c.fillRect(0,0,W,H);}
 }
 
 /* ---------- الواجهة ---------- */
@@ -404,6 +471,7 @@ function render(){
  $("#sub").textContent=`${N(G.age)} سنة · ${s[1]} · ${G.city}${G.job?" · "+jobName():G.school?(G.school.t==="u"?" · طالب جامعي":" · تلميذ"):""}`;
  $("#money").innerHTML=`${fmt(G.money)}<div class="pill">${G.debt>0?"دين "+fmt(G.debt):""}</div>`;
  $("#stats").innerHTML=bar("❤️ صحة",G.health,"#ff5d6c")+bar("😊 سعادة",G.happy,"#ffc857")+bar("🧠 ذكاء",G.smarts,"#4ea8ff")+bar("✨ جمال",G.looks,"#c07cff")+bar("🤝 علاقات",G.social,"#4cd68a")+bar("😰 توتر",G.stress,"#ff9d3d");
+drawScene();
  $("#bar").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));
  const m=$("#main");
  let h="";
@@ -413,6 +481,7 @@ function render(){
   h+="</div>";
  }
  if(tab==="rel"){
+  h+=famTree();
   h+=`<div class="card"><b>عيلتك وأصحابك</b>`;
   G.rels.forEach(r=>{h+=`<div class="row"><div class="ic">${r.alive?r.ic:"🪦"}</div><div class="t">${r.n}<small>${r.t} · ${N(r.age)} سنة${r.alive?"":" · متوفى"}</small>${r.alive?`<div class="st"><div class="bar"><i style="width:${r.bond}%;background:var(--g)"></i></div></div>`:""}</div>${r.alive?`<button class="btn" data-rel="${r.id}">قضّي وقت</button>`:""}</div>`;});
   h+="</div>";
