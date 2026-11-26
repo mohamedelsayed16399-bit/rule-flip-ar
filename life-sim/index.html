@@ -20,6 +20,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 #log p.good{border-inline-start:4px solid var(--g)}#log p.bad{border-inline-start:4px solid var(--r)}#log p.big{border-inline-start:4px solid var(--ac);background:var(--card2)}
 #bar{display:flex;background:var(--card);padding-bottom:env(safe-area-inset-bottom)}
 #bar button{flex:1;background:none;padding:10px 2px;font-size:12px;color:var(--mu)}#bar button.on{color:var(--ac);font-weight:700}#bar button span{display:block;font-size:20px}
+#focus{display:flex;gap:6px;padding:6px 12px 0;overflow-x:auto}#focus button{flex:none;background:var(--card);padding:7px 11px;border-radius:20px;font-size:13px;color:var(--mu)}#focus button.on{background:var(--ac);color:#2a1a00;font-weight:700}
 #age{margin:8px 12px;padding:15px;border-radius:16px;background:linear-gradient(135deg,var(--ac),#ff9d3d);color:#2a1a00;font-size:20px;font-weight:800;box-shadow:0 4px 0 #b3721a}
 #age:active{transform:translateY(3px);box-shadow:none}
 .card{background:var(--card);border-radius:14px;padding:12px;margin:8px 0}
@@ -43,6 +44,7 @@ input[type=text]{width:100%;padding:12px;border-radius:10px;border:0;background:
 <div id="top"><div id="av">🧒</div><div><div id="nm">—</div><div id="sub"></div></div><div id="money"></div></div>
 <div id="stats"></div>
 <div id="main"><div id="log"></div></div>
+<div id="focus"></div>
 <button id="age">كبّر سنة ⏭️</button>
 <div id="bar"></div>
 <div id="modal"><div id="mb"></div></div><div id="toast"></div>
@@ -110,7 +112,7 @@ function rel(id){return G.rels.find(r=>r.id===id);}
 function alive(){return G.rels.filter(r=>r.alive);}
 function has(t){return G.tags.includes(t);}
 function tag(t){if(!has(t))G.tags.push(t);}
-function jobName(){return G.job?G.job.n:"عاطل";}
+function jobName(){if(!G.job)return "عاطل";const lv=Math.min(3,Math.floor(G.jobYears/5));return (['','أول ','كبير ','مدير '][lv]||'')+G.job.n;}
 
 /* ---------- الوظائف ---------- */
 const JOBS=[
@@ -259,6 +261,8 @@ function ageUp(){
  if(G.traits&&G.traits.includes('lazy')){G.perf=cl(G.perf-1);stat('stress',-2);}
  if(G.traits&&G.traits.includes('greedy')&&G.money>0)money(G.money*.02);
  if(G.traits&&G.traits.includes('brave')&&R()<.04)stat('smarts',0);
+ // تركيز السنة
+ switch(G.focus){case'study':stat('smarts',3);stat('stress',4);if(G.school&&G.school.t==='u')stat('smarts',1);break;case'work':if(G.job){G.perf=cl(G.perf+6);stat('stress',5);}break;case'health':stat('health',5);stat('stress',-5);break;case'social':stat('social',5);stat('happy',2);G.rels.forEach(r=>{if(r.alive&&R()<.3)r.bond=cl(r.bond+3);});break;case'fun':stat('happy',6);stat('stress',-8);if(G.money>10000)money(-4000);break;}
  // مدرسة
  if(G.age===6){startSchool();addLog("🎒 دخلت المدرسة الابتدائية.","big");}
  if(G.school){
@@ -372,17 +376,20 @@ $("#mb").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b
 let tab="life";
 const TABS=[["life","📜","الحياة"],["act","⚡","أنشطة"],["rel","👪","العلاقات"],["work","💼","شغل ودراسة"],["own","🏠","ممتلكات"],["me","🏅","إنجازات"]];
 function buildBar(){$("#bar").innerHTML=TABS.map(t=>`<button data-t="${t[0]}"><span>${t[1]}</span>${t[2]}</button>`).join("");}
+$("#focus").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(!b||!G||G.dead)return;G.focus=b.dataset.f;beep(500,.04);render();save();});
 $("#bar").addEventListener("click",e=>{const b=e.target.closest("[data-t]");if(!b)return;tab=b.dataset.t;render();});
 $("#age").addEventListener("click",()=>{if(!G||G.dead||$("#modal").classList.contains("on"))return;beep(440,.05);ageUp();});
 $("#mb").addEventListener("click",()=>beep(660,.04));
 function bar(l,v,c){return `<div class="st">${l} <b>${N(v)}</b><div class="bar"><i style="width:${v}%;background:${c}"></i></div></div>`;}
+const FOC=[['none','⚖️ عادي'],['study','📚 مذاكرة'],['work','💼 شغل'],['health','💪 صحة'],['social','🤝 ناس'],['fun','🎉 رفاهية']];
 function render(){
  if(!G)return;
+ $('#focus').innerHTML=G.dead?'':FOC.map(f=>`<button data-f="${f[0]}" class="${(G.focus||'none')===f[0]?'on':''}">${f[1]}</button>`).join('');
  const s=stage(G.age);
  $("#av").textContent=G.dead?"🪦":s[2];
  document.body.style.background=G.age<13?"#1b2a4a":G.age<30?"#1b1530":G.age<60?"#1a2a2a":"#2a2218";
  $("#nm").textContent=G.name+" "+G.surname;
- $("#sub").textContent=`${N(G.age)} سنة · ${s[1]} · ${G.city}${G.job?" · "+G.job.n:G.school?(G.school.t==="u"?" · طالب جامعي":" · تلميذ"):""}`;
+ $("#sub").textContent=`${N(G.age)} سنة · ${s[1]} · ${G.city}${G.job?" · "+jobName():G.school?(G.school.t==="u"?" · طالب جامعي":" · تلميذ"):""}`;
  $("#money").innerHTML=`${fmt(G.money)}<div class="pill">${G.debt>0?"دين "+fmt(G.debt):""}</div>`;
  $("#stats").innerHTML=bar("❤️ صحة",G.health,"#ff5d6c")+bar("😊 سعادة",G.happy,"#ffc857")+bar("🧠 ذكاء",G.smarts,"#4ea8ff")+bar("✨ جمال",G.looks,"#c07cff")+bar("🤝 علاقات",G.social,"#4cd68a")+bar("😰 توتر",G.stress,"#ff9d3d");
  $("#bar").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));
