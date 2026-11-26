@@ -202,6 +202,17 @@ E({id:"nostalgia",a:55,b:100,w:4,t:"لقيت صور قديمة من أيام ا�
 E({id:"mosque",a:50,b:100,w:4,t:"إمام المسجد طلب مساعدة في ترميم المسجد.",c:[{t:"أتبرع ٢٠ ألف",f(){money(-20000,"تبرع للمسجد");G.faith=cl(G.faith+8);stat("happy",8);}},{t:"أتبرع بوقتي",f(){G.faith=cl(G.faith+4);stat("social",4);}}]});
 E({id:"grandson",a:60,b:100,w:4,ok:()=>G.flags.grand,t:"حفيدك بيسألك عن أيام زمان.",c:[{t:"أحكيله عن الإسكندرية القديمة",f(){stat("happy",10);stat("social",3);}},{t:"ألعب معاه",f(){stat("health",3);stat("happy",8);}}]});
 E({id:"will",a:65,b:100,w:4,t:"فكرت تكتب وصيتك وتوزع ممتلكاتك.",c:[{t:"أكتب الوصية",f(){stat("stress",-8);G.flags.will=1;}},{t:"لسه بدري",f(){}}]});
+/* ---- جولة ٥ ---- */
+E({id:"chronic",a:40,b:75,w:3,ok:()=>!has("chronic")&&G.health<70,t:"التحاليل بتقول إن عندك سكر.",c:[{t:"التزم بالدايت والعلاج",f(){tag("chronic");money(-3000,"علاج السكر");stat("health",3);stat("stress",4);}},{t:"أتجاهل",f(){tag("chronic");stat("health",-10);}}]});
+E({id:"inlaws",a:24,b:60,w:5,ok:()=>rel("spouse")&&rel("spouse").alive,t:"أهل شريك حياتك عايزين يتدخلوا في قراراتكم.",c:[{t:"أسمع وأحترم",f(){stat("stress",5);rel("spouse").bond=cl(rel("spouse").bond+3);}},{t:"أحط حدود بلطف",f(){stat("stress",-2);rel("spouse").bond=cl(rel("spouse").bond+5);}},{t:"أتخانق معاهم",f(){rel("spouse").bond=cl(rel("spouse").bond-10);stat("happy",-4);}}]});
+E({id:"housemove",a:28,b:55,w:3,ok:()=>G.assets.some(a=>a.id==="house")&&!G.assets.some(a=>a.id==="villa")&&G.money>2500000,t:"فيلا على الساحل الشمالي معروضة بسعر ٤ مليون.",c:[{t:"أشتريها 🏡",ok:()=>G.money>=4000000,f(){money(-4000000,"فيلا الساحل");G.assets.push({id:"villa",ic:"🏡",n:"فيلا الساحل",v:4000000});stat("happy",15);}},{t:"لسه",f(){}}]});
+E({id:"mentor",a:20,b:45,w:3,ok:()=>G.job,t:"مدير كبير عرض إنه يبقى مرشدك في الشغل.",c:[{t:"أقبل وأتعلم 🎓",f(){G.perf=cl(G.perf+12);stat("smarts",3);}},{t:"أمشي لوحدي",f(){}}]});
+E({id:"startup",a:22,b:45,w:2.5,ok:()=>G.skills.code>=2&&!has("owner")&&G.money>40000,t:"فكرة تطبيق ممكن تبقى شركة ناشئة. تجرب؟",c:[{t:"أستقيل وأبدأ 🚀",s:"٤٠ ألف",f(){money(-40000,"تأسيس");loseJob("استقلت");if(R()<.3+G.smarts/250){tag("owner");G.flags.bizY=0;G.flags.bizLvl=2;addLog("الشركة الناشئة خدت تمويل!","big");}else{addLog("الفكرة ماجتش.","bad");stat("happy",-8);}}},{t:"أفضل في الأمان",f(){}}]});
+E({id:"friendloss",a:25,b:70,w:3,t:"صاحب عمرك بيمر بأزمة ومحتاجك.",c:[{t:"أقف جنبه",f(){stat("social",8);stat("stress",5);stat("happy",3);}},{t:"مشغول",f(){stat("social",-6);}}]});
+E({id:"dream",a:18,b:40,w:3,t:"كان نفسك تحقق حلم قديم، تعمل إيه؟",c:[{t:"أكتب خطة وأبدأ",f(){stat("smarts",3);stat("happy",6);stat("stress",4);}},{t:"أنساه",f(){stat("happy",-5);}}]});
+E({id:"kidschool",a:30,b:55,w:5,ok:()=>G.rels.some(r=>r.kid&&r.alive&&r.age>=5&&r.age<=17),t:"ابنك/بنتك محتاج مدرسة أحسن.",c:[{t:"مدرسة خاصة ٦٠ ألف",f(){money(-60000,"مصاريف مدرسة");G.rels.filter(r=>r.kid).forEach(k=>k.bond=cl(k.bond+4));}},{t:"حكومية وأتابعه بنفسي",f(){stat("stress",4);G.rels.filter(r=>r.kid).forEach(k=>k.bond=cl(k.bond+6));}}]});
+E({id:"teen",a:35,b:58,w:5,ok:()=>G.rels.some(r=>r.kid&&r.alive&&r.age>=13&&r.age<=19),t:"ابنك المراهق بيتحداك ومبيسمعش الكلام.",c:[{t:"أتكلم معاه كصديق",f(){G.rels.filter(r=>r.kid).forEach(k=>k.bond=cl(k.bond+8));}},{t:"أشدد عليه",f(){G.rels.filter(r=>r.kid).forEach(k=>k.bond=cl(k.bond-8));stat("stress",5);}}]});
+E({id:"umra",a:30,b:80,w:3,ok:()=>G.money>80000&&G.faith>40,t:"فرصة عمرة في رمضان.",c:[{t:"أعتمر 🕋",s:"٨٠ ألف",f(){money(-80000,"عمرة");G.faith=cl(G.faith+15);stat("stress",-15);stat("happy",10);}},{t:"مش المرة دي",f(){}}]});
 function loseJob(why){if(!G.job)return;addLog("👋 "+why+" من وظيفة "+G.job.n+".","bad");G.job=null;G.salary=0;G.jobYears=0;}
 function jail(){const y=ri(1,4);addLog("⛓️ اتسجنت "+y+" سنين.","bad");ach("prison");stat("happy",-30);stat("health",-12);G.flags.jailLeft=y;loseJob("اتحبست");G.crimeRec=Math.max(0,G.crimeRec-1);}
 
@@ -261,6 +272,7 @@ function ageUp(){
  if(G.traits&&G.traits.includes('lazy')){G.perf=cl(G.perf-1);stat('stress',-2);}
  if(G.traits&&G.traits.includes('greedy')&&G.money>0)money(G.money*.02);
  if(G.traits&&G.traits.includes('brave')&&R()<.04)stat('smarts',0);
+ if(has('chronic'))stat('health',-2);
  // تركيز السنة
  switch(G.focus){case'study':stat('smarts',3);stat('stress',4);if(G.school&&G.school.t==='u')stat('smarts',1);break;case'work':if(G.job){G.perf=cl(G.perf+6);stat('stress',5);}break;case'health':stat('health',5);stat('stress',-5);break;case'social':stat('social',5);stat('happy',2);G.rels.forEach(r=>{if(r.alive&&R()<.3)r.bond=cl(r.bond+3);});break;case'fun':stat('happy',6);stat('stress',-8);if(G.money>10000)money(-4000);break;}
  // مدرسة
