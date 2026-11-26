@@ -384,6 +384,20 @@ function shareCard(){
  cv.toBlob(b=>{const f=new File([b],"my-life.png",{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:"حياتي"}).catch(()=>{});}else{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="my-life.png";a.click();}});
 }
 
+
+function storyText(){
+ const m=G.male;const pr=(a,b)=>m?a:b;
+ const parts=[];
+ parts.push(`وُلد${pr("","ت")} ${G.name} في ${G.famName} بـ${G.city}.`);
+ parts.push(G.edu==="uni"||G.edu==="phd"?`اتخرج${pr("","ت")} من الجامعة${G.tracks[0]?" ("+FACS.find(f=>f[0]===G.tracks[0])[1].replace(/ .*/,"")+")":""}.`:G.edu==="hs"?"خلّص الثانوية وبدأ يشق طريقه.":"اتعلم من الحياة قبل المدرسة.");
+ if(G.job)parts.push(`اشتغل ${jobName()} لحد آخر أيامه.`);else if(G.flags.retired)parts.push("طلع على المعاش بعد سنين شغل طويلة.");
+ const sp=G.rels.find(r=>r.id==="spouse");if(sp)parts.push(`واتجوز ${sp.n}${G.kids?` وخلّف ${N(G.kids)} ${G.kids>2?"أولاد":"ولد"}`:""}.`);
+ if(G.flags.hajj)parts.push("وأدّى فريضة الحج.");
+ if(has("owner"))parts.push("وبنى مشروعه الخاص.");
+ if(G.travel>2)parts.push(`وسافر ${N(G.travel)} مرات.`);
+ parts.push(G.happy>=70?"وعاش سعيد وراضي.":G.happy>=40?"وعاش حياة عادية فيها حلو ومرّ.":"وعاش حياة تقيلة بس كمّل.");
+ return parts.join(" ");
+}
 function endLife(){
  flush();
  META_.lives++;META_.best=Math.max(META_.best,score());
@@ -397,7 +411,7 @@ function endLife(){
  كان ${jobName()} — ${EDUN[eduRank()]} — ${G.city}.<br>
  السعادة: ${G.happy}٪ — الفلوس: ${fmt(G.money)} — الأولاد: ${N(G.kids)}<br>
  بيعيش بعده: ${rels}</div>
- <div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
+ <div class="card" style="line-height:1.8">📖 ${storyText()}</div><div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
  <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`,a=>{if(a==="share"){shareCard();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
 }
 
@@ -503,7 +517,7 @@ drawScene();
   <button class="btn" data-act="doc">🩺 كشف دكتور (١٥٠٠)</button><button class="btn" data-act="meditate">🧘 تأمل وصلاة</button>
   <button class="btn" data-act="friends">🍻 خروجة مع الأصحاب</button><button class="btn" data-act="skin">💅 عناية بالشكل (٥ آلاف)</button>
   <button class="btn" data-act="volunteer">🤲 عمل خيري</button><button class="btn" data-act="side">💻 شغل جانبي</button>
-  <button class="btn" data-act="gamble">🎲 رهان (١٠ آلاف)</button><button class="btn" data-act="date">❤️ تعرّف على حد</button></div>
+  <button class="btn" data-act="gamble">🎲 رهان (١٠ آلاف)</button><button class="btn" data-act="date">❤️ تعرّف على حد</button><button class="btn" data-act="task">🎯 مهمة شغل (لعبة)</button></div>
   <div class="pill">ممكن تعمل نشاط واحد كل سنة.</div></div>`;
  }
  if(tab==="own"){
@@ -534,6 +548,19 @@ $("#main").addEventListener("click",e=>{
  if(t.dataset.buy){const m={car:["🚗","عربية",250000],house:["🏠","شقة",900000],villa:["🏡","فيلا الساحل",4000000],watch:["⌚","ساعة فاخرة",90000]}[t.dataset.buy];if(G.money<m[2])return;G.money-=m[2];G.assets.push({id:t.dataset.buy,ic:m[0],n:m[1],v:m[2]});stat("happy",8);addLog(`🛍️ اشتريت ${m[1]}.`,"good");if(t.dataset.buy==="house")addLog("مبقاش عليك إيجار.");flush();render();save();}
  if(t.dataset.act)doAct(t.dataset.act);
 });
+
+function workGame(){
+ let q=0,ok=0;const total=3;
+ const next=()=>{
+  if(q>=total){closeM();const d=ok-1;G.perf=cl(G.perf+d*7);stat("stress",3);if(ok===total){const b=Math.round(G.salary*.05);money(b,"مكافأة إنجاز");addLog("🎯 أنجزت المهمة بامتياز!","good");}else if(ok===0){addLog("🎯 المهمة فشلت وزعل المدير.","bad");}else addLog("🎯 أنجزت المهمة بشكل مقبول.");clamp();flush();render();save();return;}
+  q++;const a=ri(12,60),b=ri(3,30),op=pick(["+","-","×"]);
+  const ans=op==="+"?a+b:op==="-"?a-b:Math.min(a,12)*Math.min(b,12);
+  const x=op==="×"?Math.min(a,12):a,y=op==="×"?Math.min(b,12):b;
+  const opts=[ans,ans+ri(1,9),ans-ri(1,9),ans+10].filter((v,i,A)=>A.indexOf(v)===i).sort(()=>R()-.5);
+  modal(`<h2>🎯 مهمة شغل ${N(q)}/${N(total)}</h2><div class="tx">احسب بسرعة: <b>${N(x)} ${op} ${N(y)}</b></div>${opts.map(o=>`<button class="ch" data-a="${o}">${N(o)}</button>`).join("")}`,v=>{if(Number(v)===ans)ok++;next();});
+ };
+ next();
+}
 function doAct(a){
  if(G.flags.act===G.age){toast("نشاط واحد كل سنة");return;}
  if(G.flags.jailLeft&&a!=="meditate"){toast("وانت في السجن؟");return;}
@@ -550,6 +577,7 @@ function doAct(a){
   case"skin":stat("looks",8);stat("happy",3);addLog("💅 اهتميت بشكلك.","good");break;
   case"volunteer":stat("happy",8);stat("social",6);G.faith=cl(G.faith+4);addLog("🤲 عملت عمل خيري.","good");break;
   case"side":if(G.age<16){toast("صغير");G.flags.act=-1;return;}stat("stress",8);const g=ri(10,40)*1000;money(g,"شغل جانبي");stat("smarts",1);break;
+  case"task":if(!G.job){toast("محتاج شغل الأول");G.flags.act=-1;return;}G.flags.act=G.age;clamp();flush();render();workGame();return;
   case"gamble":if(R()<.35){money(ri(15,50)*1000,"كسبت الرهان");stat("happy",6);}else{addLog("🎲 خسرت الرهان.","bad");stat("happy",-5);}break;
   case"date":if(G.age<16){toast("صغير");G.flags.act=-1;return;}if(rel("spouse")){addLog("انت متجوز!");break;}if(rel("fiance")){addLog("انت مخطوب!");break;}startDating(false);break;
  }
