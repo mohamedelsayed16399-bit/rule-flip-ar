@@ -62,7 +62,7 @@ const SUR=["السيد","عبد الله","الشريف","حجازي","منصو�
 const CITIES=["القاهرة","الإسكندرية","طنطا","المنصورة","أسيوط","الأقصر","أسوان","بورسعيد","الزقازيق","دمياط"];
 const TRAITS={amb:['🔥','طموح'],lazy:['🛋️','كسول'],soc:['🗣️','اجتماعي'],shy:['🤫','خجول'],pious:['🕌','متدين'],brave:['🦁','شجاع'],lucky:['🍀','محظوظ'],greedy:['🪙','حريص على الفلوس']};
 const mname=()=>pick(MN),fname=()=>pick(FN);
-let G=null;
+let G=null;let DIFF=localStorage.getItem('life-diff')||'mid';const DF={easy:{n:'😌 سهل',liv:.7,die:.7},mid:{n:'⚖️ عادي',liv:1,die:1},hard:{n:'🔥 صعب',liv:1.35,die:1.4}};
 const SAVE="life-sim-ar-v1", META="life-sim-ar-meta";
 let META_=JSON.parse(localStorage.getItem(META)||'{"lives":0,"best":0,"ach":{},"legacy":0}');
 const saveMeta=()=>localStorage.setItem(META,JSON.stringify(META_));
@@ -90,7 +90,7 @@ function newLife(name,male){
   money:0,famMoney:fam.m,famName:fam.n,wealthLvl:fam.w,fame:0,faith:ri(30,70),
   edu:"none",school:null,grade:0,job:null,jobYears:0,salary:0,perf:50,
   rels:[],assets:[],tags:[],log:[],yearLog:[],flags:{},travel:0,kids:0,dead:false,causeOfDeath:"",
-  gpa:0,tracks:[],skills:{},crimeRec:0,mil:male?"pending":"none",startBonus:bonus,debt:0,deaths:[]};
+  gpa:0,tracks:[],skills:{},crimeRec:0,mil:male?"pending":"none",startBonus:bonus,debt:0,deaths:[],diff:DIFF};
  const f=mname()+" "+pick(SUR);
  G.surname=pick(SUR);
  G.traits=[];while(G.traits.length<2){const t=pick(Object.keys(TRAITS));if(!G.traits.includes(t)&&!(t==='soc'&&G.traits.includes('shy'))&&!(t==='shy'&&G.traits.includes('soc')))G.traits.push(t);}
@@ -300,7 +300,7 @@ function ageUp(){
  if(G.flags.pension&&G.age>=60){money(G.flags.pension);}
  if(G.age>=20&&!G.job&&G.mil!=="serving"&&!G.school&&G.money<10000&&G.famMoney>0){const g=Math.min(G.famMoney,10000);money(g,"مساعدة من العيلة");G.famMoney-=g;}
  // مصاريف المعيشة
- if(G.age>=20){const liv=(G.job||G.famMoney>0?14000:6000)+G.kids*9000+(G.rels.some(r=>r.id==="spouse")?10000:0)+(G.assets.some(a=>a.id==="house")?0:G.age>=26?15000:0)+G.assets.length*400;money(-liv);}
+ if(G.age>=20){const dfm=(DF[G.diff||'mid']||DF.mid);const liv=dfm.liv*((G.job||G.famMoney>0?14000:6000)+G.kids*9000+(G.rels.some(r=>r.id==="spouse")?10000:0)+(G.assets.some(a=>a.id==="house")?0:G.age>=26?15000:0)+G.assets.length*400);money(-liv);}
  G.debt=Math.max(0,-G.money);if(G.money<0){stat("stress",8);addLog("⚠️ دخلت في دين "+fmt(-G.money)+"!","bad");}
  // مشروع
  if(has("owner")){G.flags.bizY=(G.flags.bizY||0)+1;const ch=R();if(ch<.65){const g=Math.round(ri(40,120)*1000*G.flags.bizLvl);money(g,"أرباح المشروع");}else if(ch<.85){money(-ri(10,40)*1000,"خسارة في المشروع");}else{addLog("المشروع انهار.","bad");G.tags=G.tags.filter(t=>t!=="owner");}if(G.flags.bizY>=4&&G.flags.bizLvl<3){G.flags.bizLvl++;addLog("🏢 مشروعك كبر وبقى شركة!","big");if(G.flags.bizLvl>=3)ach("boss");}}
@@ -359,7 +359,7 @@ function checkDeath(){
  if(G.age>90)p+=(G.age-90)/60;
  p+=G.health<35?(35-G.health)/(G.age<50?1200:500):0;
  if(G.health<=0)p=1;
- if(R()<p){
+ if(R()<p*(DF[G.diff||'mid']||DF.mid).die){
   G.dead=true;
   const c=G.health<20?"مرض مزمن":G.age>80?"كبر السن":pick(["أزمة قلبية","هدوء تام في النوم","حادثة"]);
   G.causeOfDeath=c;endLife();
@@ -470,7 +470,7 @@ function drawScene(){
 let mcb=null;
 function modal(html,cb){$("#mb").innerHTML=html;$("#modal").classList.add("on");mcb=cb;$("#mb").scrollTop=0;}
 function closeM(){$("#modal").classList.remove("on");mcb=null;}
-$("#mb").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||!mcb)return;const cb=mcb;if(b.disabled||b.getAttribute("disabled")!==null)return;cb(b.dataset.a);});
+$("#mb").addEventListener("click",e=>{const d=e.target.closest("[data-d]");if(d){DIFF=d.dataset.d;localStorage.setItem("life-diff",DIFF);document.querySelectorAll("#mb [data-d]").forEach(b=>b.classList.toggle("p",b.dataset.d===DIFF));return;}const b=e.target.closest("[data-a]");if(!b||!mcb)return;const cb=mcb;if(b.disabled||b.getAttribute("disabled")!==null)return;cb(b.dataset.a);});
 let tab="life";
 const TABS=[["life","📜","الحياة"],["act","⚡","أنشطة"],["rel","👪","العلاقات"],["work","💼","شغل ودراسة"],["own","🏠","ممتلكات"],["me","🏅","إنجازات"]];
 function buildBar(){$("#bar").innerHTML=TABS.map(t=>`<button data-t="${t[0]}"><span>${t[1]}</span>${t[2]}</button>`).join("");}
@@ -590,9 +590,10 @@ function startScreen(){
  $("#nm").textContent="حياة جديدة";$("#sub").textContent="";$("#money").textContent="";$("#stats").innerHTML="";$("#av").textContent="🍼";$("#main").innerHTML="";
  let h=`<h2>🍼 عِش حياتك</h2><div class="tx">هتتولد وتعيش حياة كاملة: مدرسة، ثانوية عامة، جامعة، جيش، شغل، جواز، أولاد، وشيخوخة. كل قرار بيأثر. وكل حياة مختلفة.</div>
  <div class="pill">الحيوات السابقة: ${N(META_.lives)} · أفضل نتيجة: ${N(META_.best)}${META_.legacy?` · ميراث جاهز: ${fmt(META_.legacy)}`:""}</div>
+ <div style="margin:8px 0">${Object.entries(DF).map(([k,v])=>`<button class="btn ${DIFF===k?"p":""}" data-d="${k}">${v.n}</button>`).join("")}</div>
  <input type="text" id="nameIn" placeholder="اسمك" maxlength="14" value="">
  <button class="ch" data-a="m">👦 ولد</button><button class="ch" data-a="f">👧 بنت</button><button class="ch" data-a="r">🎲 عشوائي بالكامل</button>`;
- modal(h,a=>{let m=a==="m";if(a==="r")m=R()<.5;let n=($("#nameIn").value||"").trim()||(m?mname():fname());closeM();newLife(n,m);});
+ modal(h,a=>{if(a.length===0)return;let m=a==="m";if(a==="r")m=R()<.5;let n=($("#nameIn").value||"").trim()||(m?mname():fname());closeM();newLife(n,m);});
 }
 function init(){
  buildBar();
