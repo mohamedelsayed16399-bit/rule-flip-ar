@@ -214,6 +214,18 @@ E({id:"dream",a:18,b:40,w:3,t:"كان نفسك تحقق حلم قديم، تعم
 E({id:"kidschool",a:30,b:55,w:5,ok:()=>G.rels.some(r=>r.kid&&r.alive&&r.age>=5&&r.age<=17),t:"ابنك/بنتك محتاج مدرسة أحسن.",c:[{t:"مدرسة خاصة ٦٠ ألف",f(){money(-60000,"مصاريف مدرسة");G.rels.filter(r=>r.kid).forEach(k=>k.bond=cl(k.bond+4));}},{t:"حكومية وأتابعه بنفسي",f(){stat("stress",4);G.rels.filter(r=>r.kid).forEach(k=>k.bond=cl(k.bond+6));}}]});
 E({id:"teen",a:35,b:58,w:5,ok:()=>G.rels.some(r=>r.kid&&r.alive&&r.age>=13&&r.age<=19),t:"ابنك المراهق بيتحداك ومبيسمعش الكلام.",c:[{t:"أتكلم معاه كصديق",f(){G.rels.filter(r=>r.kid).forEach(k=>k.bond=cl(k.bond+8));}},{t:"أشدد عليه",f(){G.rels.filter(r=>r.kid).forEach(k=>k.bond=cl(k.bond-8));stat("stress",5);}}]});
 E({id:"umra",a:30,b:80,w:3,ok:()=>G.money>80000&&G.faith>40,t:"فرصة عمرة في رمضان.",c:[{t:"أعتمر 🕋",s:"٨٠ ألف",f(){money(-80000,"عمرة");G.faith=cl(G.faith+15);stat("stress",-15);stat("happy",10);}},{t:"مش المرة دي",f(){}}]});
+/* ---- جولة ١٠: قصص ممتدة (سلاسل أحداث) ---- */
+const CH=(id)=>(G.chains=G.chains||{},G.chains[id]=G.chains[id]||{s:0,y:0});
+function chainOk(id,step,gap){const c=(G.chains||{})[id];return c&&c.s===step&&G.age-c.y>=gap;}
+function chainSet(id,step){const c=CH(id);c.s=step;c.y=G.age;}
+// قصة ١: أرض العيلة
+E({id:"land0",a:28,b:50,w:4,ok:()=>!(G.chains||{}).land&&G.wealthLvl>=0,t:"عمك بيقول إن أرض الجد فيها نصيبه، وإنت شايف إن نصيبك أكبر. الموضوع بدأ يسخن.",c:[{t:"أتفاهم بالعقل",f(){chainSet("land",1);stat("stress",5);}},{t:"أروح لمحامي",f(){chainSet("land",2);money(-15000,"أتعاب محامي");}},{t:"أتجاهله",f(){chainSet("land",1);}}]});
+E({id:"land1",a:28,b:60,w:99,ok:()=>chainOk("land",1,2)&&!G.flags.ev_land1,t:"بعد سنتين، عمك رجع للموضوع ومعاه كبار العيلة في جلسة صلح.",c:[{t:"أتنازل عن جزء ✋",f(){G.flags.ev_land1=1;chainSet("land",9);G.flags.landEnd="peace";money(-80000,"تنازل عن جزء من الأرض");stat("happy",8);stat("stress",-12);addLog("🤝 الصلح اتم والعيلة اتجمعت.","big");}},{t:"أرفض",f(){G.flags.ev_land1=1;chainSet("land",2);stat("stress",8);}}]});
+E({id:"land2",a:28,b:65,w:99,ok:()=>chainOk("land",2,2)&&!G.flags.ev_land2,t:"القضية في المحكمة بقالها سنين. محاميك بيقول فيه فرصة تكسب، بس هتاخد وقت وفلوس.",c:[{t:"أكمل للآخر",f(){G.flags.ev_land2=1;chainSet("land",9);money(-30000,"مصاريف قضائية");if(R()<.55){money(ri(2,6)*100000,"كسبت القضية");addLog("⚖️ كسبت القضية!","big");stat("happy",8);}else{addLog("⚖️ خسرت القضية.","bad");stat("happy",-12);}}},{t:"أصالح بأي شكل",f(){G.flags.ev_land2=1;chainSet("land",9);stat("stress",-8);money(-50000);}}]});
+// قصة ٢: صاحب العمر
+E({id:"fr0",a:15,b:25,w:5,ok:()=>!(G.chains||{}).fr,t:"في واحد جديد في الفصل قعد جنبك، وبقيتوا بتتكلموا كتير. اسمه/ـا "+"(صاحب الحياة)",c:[{t:"أصاحبه بجد 🤝",f(){chainSet("fr",1);G.rels.push({id:"bff",t:"صاحب العمر",n:(G.male?mname():fname())+" "+pick(SUR),ic:"🧑‍🤝‍🧑",bond:70,age:G.age,alive:true,mem:["اتعرفتوا أول مرة في الفصل"]});stat("social",8);}},{t:"أبقى بعيد",f(){chainSet("fr",9);}}]});
+E({id:"fr1",a:18,b:35,w:99,ok:()=>chainOk("fr",1,3)&&rel("bff")&&!G.flags.ev_fr1,t:"صاحب عمرك بيشتغل في فكرة وعايزك شريك فيها. مفيش ضمان.",c:[{t:"أدخل معاه ٣٠ ألف",f(){G.flags.ev_fr1=1;chainSet("fr",2);money(-30000,"مشاركة في فكرة");rel("bff").mem.push("شاركته في أول مشروع");rel("bff").bond=cl(rel("bff").bond+10);}},{t:"أعتذر",f(){G.flags.ev_fr1=1;chainSet("fr",2);const b=rel("bff");b.mem.push("رفضت أشاركه وقت ما احتاجني");b.bond=cl(b.bond-15);}}]});
+E({id:"fr2",a:22,b:45,w:99,ok:()=>chainOk("fr",2,4)&&rel("bff")&&!G.flags.ev_fr2,t:"صاحب عمرك بيتجوز وبيطلب منك تبقى شاهد على الفرح.",c:[{t:"أكيد، شرف ليا 💍",f(){G.flags.ev_fr2=1;chainSet("fr",9);const b=rel("bff");b.mem.push("كنت شاهد على جوازه");b.bond=cl(b.bond+12);stat("happy",8);const s=G.flags.ev_fr1&&rel("bff").bond>80?ri(2,5)*10000:0;if(s){money(s,"هدية من صاحبك");}}},{t:"مش هقدر أحضر",f(){G.flags.ev_fr2=1;chainSet("fr",9);const b=rel("bff");b.mem.push("غبت عن فرحه");b.bond=cl(b.bond-20);}}]});
 function loseJob(why){if(!G.job)return;addLog("👋 "+why+" من وظيفة "+G.job.n+".","bad");G.job=null;G.salary=0;G.jobYears=0;}
 function jail(){const y=ri(1,4);addLog("⛓️ اتسجنت "+y+" سنين.","bad");ach("prison");stat("happy",-30);stat("health",-12);G.flags.jailLeft=y;loseJob("اتحبست");G.crimeRec=Math.max(0,G.crimeRec-1);}
 
@@ -253,6 +265,15 @@ function applyJob(j){
 }
 
 /* ---------- سنة جديدة ---------- */
+
+const INV={gold:["🪙","ذهب",8,14],stock:["📈","أسهم",13,30],bond:["🏦","شهادات بنك",11,2]};
+function invYear(){
+ G.inv=G.inv||{gold:0,stock:0,bond:0};
+ let tot=0;
+ Object.keys(INV).forEach(k=>{const v=G.inv[k]||0;if(v<=0)return;const [,,m,sd]=INV[k];const ret=(m+(R()+R()+R()-1.5)*sd*1.15)/100;const g=Math.round(v*ret);G.inv[k]=Math.max(0,v+g);tot+=g;});
+ if(tot!==0)addLog((tot>=0?"📊 استثماراتك ربحت ":"📊 استثماراتك خسرت ")+fmt(Math.abs(tot)),tot>=0?"good":"bad");
+}
+function invTotal(){return G.inv?Object.values(G.inv).reduce((a,b)=>a+b,0):0;}
 function ageUp(){
  if(G.dead)return;
  if(G.pending)return;
@@ -304,12 +325,13 @@ function ageUp(){
  G.debt=Math.max(0,-G.money);if(G.money<0){stat("stress",8);addLog("⚠️ دخلت في دين "+fmt(-G.money)+"!","bad");}
  // مشروع
  if(has("owner")){G.flags.bizY=(G.flags.bizY||0)+1;const ch=R();if(ch<.65){const g=Math.round(ri(40,120)*1000*G.flags.bizLvl);money(g,"أرباح المشروع");}else if(ch<.85){money(-ri(10,40)*1000,"خسارة في المشروع");}else{addLog("المشروع انهار.","bad");G.tags=G.tags.filter(t=>t!=="owner");}if(G.flags.bizY>=4&&G.flags.bizLvl<3){G.flags.bizLvl++;addLog("🏢 مشروعك كبر وبقى شركة!","big");if(G.flags.bizLvl>=3)ach("boss");}}
- if(G.money>=1000000)ach("rich");
+ if(G.money+invTotal()>=1000000)ach("rich");
  if(G.wealthLvl<0&&G.money>=500000)ach("poor");
  if(G.assets.some(a=>a.id==="villa"))ach("villa");
  if(G.age>=40&&G.health>=70&&G.smarts>=70&&G.looks>=70&&G.social>=70)ach("all");
  if(G.age>=40&&G.faith>=90)ach("faith");
  if(G.flags.abroad)ach("abroad");
+ invYear();
  // خطوبة→جواز
  const f=rel("fiance");if(f&&G.age-G.flags.engY>=2&&f.bond>35){marry();}
  else if(f&&f.bond<=35&&R()<.5){G.rels=G.rels.filter(r=>r!==f);addLog("💔 الخطوبة اتفسخت.","bad");stat("happy",-15);}
@@ -502,7 +524,7 @@ drawScene();
  if(tab==="rel"){
   h+=famTree();
   h+=`<div class="card"><b>عيلتك وأصحابك</b>`;
-  G.rels.forEach(r=>{h+=`<div class="row"><div class="ic">${r.alive?r.ic:"🪦"}</div><div class="t">${r.n}<small>${r.t} · ${N(r.age)} سنة${r.alive?"":" · متوفى"}</small>${r.alive?`<div class="st"><div class="bar"><i style="width:${r.bond}%;background:var(--g)"></i></div></div>`:""}</div>${r.alive?`<button class="btn" data-rel="${r.id}">قضّي وقت</button>`:""}</div>`;});
+  G.rels.forEach(r=>{h+=`<div class="row"><div class="ic">${r.alive?r.ic:"🪦"}</div><div class="t">${r.n}<small>${r.t} · ${N(r.age)} سنة${r.alive?"":" · متوفى"}${r.mem&&r.mem.length?`<br>💭 ${r.mem[r.mem.length-1]}`:""}</small>${r.alive?`<div class="st"><div class="bar"><i style="width:${r.bond}%;background:var(--g)"></i></div></div>`:""}</div>${r.alive?`<button class="btn" data-rel="${r.id}">قضّي وقت</button>`:""}</div>`;});
   h+="</div>";
  }
  if(tab==="work"){
@@ -524,7 +546,7 @@ drawScene();
   h+=`<div class="card"><b>ممتلكاتك</b>`;
   if(!G.assets.length)h+=`<div class="pill">مفيش ممتلكات لسه.</div>`;
   G.assets.forEach(a=>h+=`<div class="row"><div class="ic">${a.ic}</div><div class="t">${a.n}<small>${fmt(a.v)}</small></div></div>`);
-  h+=`</div><div class="card"><b>متجر</b>`;
+  h+=`</div><div class="card"><b>💹 استثمارات (${fmt(invTotal())})</b>`;Object.entries(INV).forEach(([k,v])=>{const a=(G.inv||{})[k]||0;h+=`<div class="row"><div class="ic">${v[0]}</div><div class="t">${v[1]}<small>${fmt(a)} · متوقع ${N(v[2])}٪ سنويًا، مخاطرة ${v[3]>20?"عالية":v[3]>8?"متوسطة":"قليلة"}</small></div><button class="btn" data-inv="${k}" data-do="in">+٥٠ ألف</button><button class="btn" data-inv="${k}" data-do="out">سحب</button></div>`;});h+=`</div><div class="card"><b>متجر</b>`;
   [["car","🚗","عربية",250000],["house","🏠","شقة",900000],["villa","🏡","فيلا الساحل",4000000],["watch","⌚","ساعة فاخرة",90000]].forEach(a=>{h+=`<div class="row"><div class="ic">${a[1]}</div><div class="t">${a[2]}<small>${fmt(a[3])}</small></div><button class="btn p" data-buy="${a[0]}" ${G.money<a[3]||G.age<18?"disabled":""}>اشتري</button></div>`;});
   h+="</div>";
  }
@@ -544,8 +566,9 @@ $("#main").addEventListener("click",e=>{
  if(t.id==="phd"){G.school={t:"u",y:1,fac:"grad"};money(-90000);addLog("بدأت دراسات عليا.");G.flags.phd=1;flush();render();save();}
  if(t.id==="snd"){SND=!SND;localStorage.setItem('life-snd',SND?'1':'0');render();}
  if(t.id==="reset"){if(confirm("متأكد؟ هتفقد الحياة الحالية.")){localStorage.removeItem(SAVE);startScreen();}}
- if(t.dataset.rel){const r=rel(t.dataset.rel);if(G.flags.act===G.age){toast("استنى للسنة الجاية");return;}G.flags.act=G.age;r.bond=cl(r.bond+ri(6,14));stat("happy",4);stat("stress",-3);addLog(`قضيت وقت حلو مع ${r.n}.`,"good");flush();render();save();}
+ if(t.dataset.rel){const r=rel(t.dataset.rel);if(G.flags.act===G.age){toast("استنى للسنة الجاية");return;}G.flags.act=G.age;r.bond=cl(r.bond+ri(6,14));stat("happy",4);stat("stress",-3);addLog(`قضيت وقت حلو مع ${r.n}.`,"good");r.mem=r.mem||[];if(R()<.5)r.mem.push(pick(["قعدتوا ساعات تتكلموا","خرجتوا مشوار حلو","ضحكتوا من قلبكم","أكلتوا مع بعض"])+" وانت عمرك "+N(G.age));if(r.mem.length>6)r.mem.shift();flush();render();save();}
  if(t.dataset.buy){const m={car:["🚗","عربية",250000],house:["🏠","شقة",900000],villa:["🏡","فيلا الساحل",4000000],watch:["⌚","ساعة فاخرة",90000]}[t.dataset.buy];if(G.money<m[2])return;G.money-=m[2];G.assets.push({id:t.dataset.buy,ic:m[0],n:m[1],v:m[2]});stat("happy",8);addLog(`🛍️ اشتريت ${m[1]}.`,"good");if(t.dataset.buy==="house")addLog("مبقاش عليك إيجار.");flush();render();save();}
+ if(t.dataset.inv){G.inv=G.inv||{gold:0,stock:0,bond:0};const k=t.dataset.inv;if(t.dataset.do==="in"){if(G.money<50000){toast("مفيش ٥٠ ألف");return;}G.money-=50000;G.inv[k]+=50000;}else{G.money+=G.inv[k];G.inv[k]=0;}render();save();}
  if(t.dataset.act)doAct(t.dataset.act);
 });
 
