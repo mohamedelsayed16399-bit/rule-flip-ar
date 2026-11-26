@@ -110,7 +110,8 @@ function newLife(name,male){
 }
 function addLog(t,c=""){G.yearLog.push({t,c});}
 function checkAch(){try{if(!G)return;const k=(G.chains||{}),nw=G.money+invTotal();if(G.flags.cafe)ach('cafe');if(G.flags.bizWon)ach('chain');if(k.fl&&k.fl.s===9)ach('flat');if(G.flags.fit)ach('fit');if(G.flags.ev_kid2&&k.kid&&k.kid.s===9)ach('dad');if(G.flags.landEnd==='peace')ach('peace');if(nw>=5000000)ach('mill5');if(G.age>=80)ach('life80');}catch(e){}}
-function flush(){checkAch();if(!G||!G.yearLog.length)return;G.log.push({age:G.age,items:G.yearLog});G.yearLog=[];if(G.log.length>120)G.log.shift();}
+const NEWS=["أسعار العيش والسكر بتتغير والناس بتتكلم عن الغلا","افتتاح كوبري جديد بيقلل زحمة المرور","موجة حر غير عادية في الصيف","منتخب مصر في كأس الأمم والكل متجمع قدام التلفزيون","الجنيه بيتحرك قصاد الدولار والأسعار بتتأثر","مترو جديد بيوصل لمنطقتكم","فيضان نيل عالي وحفلات في الكورنيش","امتحانات الثانوية العامة والتوتر في كل بيت","إنترنت أسرع وتطبيقات جديدة بتغير الشغل","موسم رمضان والمسلسلات والزحمة على السوق"];
+function flush(){if(G&&G.age>0&&G.age%5===0&&!G.dead&&G.yearLog&&!G.yearLog.some(x=>x.t.startsWith("📰")))G.yearLog.unshift({t:"📰 عناوين السنة: "+NEWS[ri(0,NEWS.length-1)],c:""});checkAch();if(!G||!G.yearLog.length)return;G.log.push({age:G.age,items:G.yearLog});G.yearLog=[];if(G.log.length>120)G.log.shift();}
 function stat(k,d){const o=G[k];G[k]=cl(G[k]+d);return G[k]-o;}
 function income(){return G.job?G.salary:0;}
 function money(d,why){d=Math.round(d);G.money+=d;if(why)addLog((d>=0?"💵 ":"💸 ")+why+" ("+fmt(d)+")",d>=0?"good":"bad");}
