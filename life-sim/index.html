@@ -74,6 +74,10 @@ const ACH={
  boss:["🏢","صاحب شركة","افتح شركتك"],fame:["⭐","مشهور","وصّل الشهرة ٨٠"],prison:["⛓️","ورا الشمس","اتسجن"],mil:["🪖","خدمت الوطن","خلّص الجيش"],
  trav:["✈️","رحّالة","سافر ٥ مرات"],pass:["🕊️","حياة بسيطة","مت وإنت راضي (سعادة ٧٠+)"],book:["📚","كاتب","اطبع كتاب"],lotto:["🎰","حظّ","اكسب جائزة كبيرة"],
  fam:["👨‍👩‍👧‍👦","جد وجدة","بقى عندك أحفاد"],poor:["🌱","من الصفر","ابدأ في أسرة فقيرة وعدّي ٥٠٠ ألف"],villa:["🏡","فيلا الساحل","اشتري فيلا"],all:["🧩","متكامل","صحة وذكاء وجمال وعلاقات ٧٠+ بعد الأربعين"],faith:["🌙","القلب المطمئن","إيمان ٩٠٪ بعد الأربعين"],abroad:["🛫","مغترب","اشتغل بره مصر"],gm:["🏆","المتفوق","جيب مجموع ٩٥٪+ في الثانوية"]
+,
+ cafe:["☕","صاحب كافيه","افتح كافيه"],chain:["🚀","سلسلة ناجحة","نجّح مشروعك لسلسلة فروع"],flat:["🏠","ملكت شقتك","اشتري شقة بالتقسيط وسلّمها"],fit:["🏃","جسم حديد","التزم بالرياضة بعد إنذار الصحة"],
+ dad:["🫶","أب/أم قريب","صالح ابنك المراهق"],land:["⚖️","صاحب حق","كسب قضية الأرض"],peace:["🤝","صلح العيلة","اتصالح مع عمك على الأرض"],mil2:["🪖","جدع","خلّص جيش وشغل"],
+ mill5:["💎","٥ مليون","صافي ثروة ٥ مليون"],life80:["🌳","شجرة معمّرة","عِش ٨٠ سنة"],bff:["🧑‍🤝‍🧑","صاحب العمر","خلّي صاحب عمرك لآخر العمر"],derby:["⚽","مشجع أصيل","شوف الديربي"]
 };
 function ach(k){if(META_.ach[k])return;META_.ach[k]=1;saveMeta();toast("🏅 إنجاز: "+ACH[k][1]);}
 let SND=localStorage.getItem('life-snd')!=='0';let AC=null;
@@ -105,7 +109,8 @@ function newLife(name,male){
  flush();render();save();
 }
 function addLog(t,c=""){G.yearLog.push({t,c});}
-function flush(){if(!G||!G.yearLog.length)return;G.log.push({age:G.age,items:G.yearLog});G.yearLog=[];if(G.log.length>120)G.log.shift();}
+function checkAch(){try{if(!G)return;const k=(G.chains||{}),nw=G.money+invTotal();if(G.flags.cafe)ach('cafe');if(G.flags.bizWon)ach('chain');if(k.fl&&k.fl.s===9)ach('flat');if(G.flags.fit)ach('fit');if(G.flags.ev_kid2&&k.kid&&k.kid.s===9)ach('dad');if(G.flags.landEnd==='peace')ach('peace');if(nw>=5000000)ach('mill5');if(G.age>=80)ach('life80');}catch(e){}}
+function flush(){checkAch();if(!G||!G.yearLog.length)return;G.log.push({age:G.age,items:G.yearLog});G.yearLog=[];if(G.log.length>120)G.log.shift();}
 function stat(k,d){const o=G[k];G[k]=cl(G[k]+d);return G[k]-o;}
 function income(){return G.job?G.salary:0;}
 function money(d,why){d=Math.round(d);G.money+=d;if(why)addLog((d>=0?"💵 ":"💸 ")+why+" ("+fmt(d)+")",d>=0?"good":"bad");}
