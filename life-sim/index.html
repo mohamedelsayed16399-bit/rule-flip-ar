@@ -111,7 +111,7 @@ function newLife(name,male){
 function addLog(t,c=""){G.yearLog.push({t,c});}
 function checkAch(){try{if(!G)return;const k=(G.chains||{}),nw=G.money+invTotal();if(G.flags.cafe)ach('cafe');if(G.flags.bizWon)ach('chain');if(k.fl&&k.fl.s===9)ach('flat');if(G.flags.fit)ach('fit');if(G.flags.ev_kid2&&k.kid&&k.kid.s===9)ach('dad');if(G.flags.landEnd==='peace')ach('peace');if(nw>=5000000)ach('mill5');if(G.age>=80)ach('life80');}catch(e){}}
 const NEWS=["أسعار العيش والسكر بتتغير والناس بتتكلم عن الغلا","افتتاح كوبري جديد بيقلل زحمة المرور","موجة حر غير عادية في الصيف","منتخب مصر في كأس الأمم والكل متجمع قدام التلفزيون","الجنيه بيتحرك قصاد الدولار والأسعار بتتأثر","مترو جديد بيوصل لمنطقتكم","فيضان نيل عالي وحفلات في الكورنيش","امتحانات الثانوية العامة والتوتر في كل بيت","إنترنت أسرع وتطبيقات جديدة بتغير الشغل","موسم رمضان والمسلسلات والزحمة على السوق"];
-function flush(){if(G&&G.age>0&&G.age%5===0&&!G.dead&&G.yearLog&&!G.yearLog.some(x=>x.t.startsWith("📰")))G.yearLog.unshift({t:"📰 عناوين السنة: "+NEWS[ri(0,NEWS.length-1)],c:""});checkAch();if(!G||!G.yearLog.length)return;G.log.push({age:G.age,items:G.yearLog});G.yearLog=[];if(G.log.length>120)G.log.shift();}
+function flush(){if(G&&!G.dead){G.hist=G.hist||[];if(!G.hist.length||G.hist[G.hist.length-1].a!==G.age)G.hist.push({a:G.age,m:G.money+(typeof invTotal==='function'?invTotal():0),h:G.happy});}if(G&&G.age>0&&G.age%5===0&&!G.dead&&G.yearLog&&!G.yearLog.some(x=>x.t.startsWith("📰")))G.yearLog.unshift({t:"📰 عناوين السنة: "+NEWS[ri(0,NEWS.length-1)],c:""});checkAch();if(!G||!G.yearLog.length)return;G.log.push({age:G.age,items:G.yearLog});G.yearLog=[];if(G.log.length>120)G.log.shift();}
 function stat(k,d){const o=G[k];G[k]=cl(G[k]+d);return G[k]-o;}
 function income(){return G.job?G.salary:0;}
 function money(d,why){d=Math.round(d);G.money+=d;if(why)addLog((d>=0?"💵 ":"💸 ")+why+" ("+fmt(d)+")",d>=0?"good":"bad");}
@@ -507,6 +507,16 @@ function drawPoster(){
  let k=0;G.log.forEach(l=>l.items.forEach(i=>{if(i.c==="big"&&l.age>0){const up=k%2===0;const x=X(l.age);c.fillStyle="#ffc857";c.beginPath();c.arc(x,150,6,0,7);c.fill();c.strokeStyle="#ffc85766";c.lineWidth=1;c.beginPath();c.moveTo(x,150);c.lineTo(x,up?95:205);c.stroke();c.fillStyle="#f4efff";c.font="11px Tahoma";const t=i.t.replace(/[^\u0600-\u06FF0-9 ]/g,"").trim().slice(0,22);c.fillText(t,Math.max(60,Math.min(W-60,x)),up?90:218);k++;}}));
  c.fillStyle="#ffc857";c.font="bold 18px Tahoma";c.fillText(G.name+" — "+N(G.age)+" سنة",W/2,28);
 }
+function drawChart(){
+ const cv=document.getElementById("chart");if(!cv||!G.hist||G.hist.length<2)return;const c=cv.getContext("2d"),W=720,H=240,P=34;
+ c.fillStyle="#1b1530";c.fillRect(0,0,W,H);const h=G.hist,mx=Math.max(1,...h.map(x=>x.m)),mn=Math.min(0,...h.map(x=>x.m)),a=h[h.length-1].a||1;
+ const X=v=>P+(W-2*P)*v/a,Y=v=>H-P-(H-2*P)*(v-mn)/(mx-mn||1);
+ c.strokeStyle="#ffffff22";c.lineWidth=1;c.beginPath();c.moveTo(P,Y(0));c.lineTo(W-P,Y(0));c.stroke();
+ c.strokeStyle="#ffc857";c.lineWidth=3;c.beginPath();h.forEach((x,i)=>{i?c.lineTo(X(x.a),Y(x.m)):c.moveTo(X(x.a),Y(x.m));});c.stroke();
+ c.strokeStyle="#4cd68a";c.lineWidth=2;c.beginPath();h.forEach((x,i)=>{const y=H-P-(H-2*P)*x.h/100;i?c.lineTo(X(x.a),y):c.moveTo(X(x.a),y);});c.stroke();
+ c.fillStyle="#a99fcb";c.font="13px Tahoma";c.textAlign="center";c.fillText("📈 الثروة (أصفر) والسعادة (أخضر) على مدار حياتك",W/2,20);
+ c.fillStyle="#ffc857";c.fillText(fmt(mx),W-50,38);
+}
 function endLife(){
  flush();
  META_.lives++;META_.best=Math.max(META_.best,score());
@@ -520,10 +530,10 @@ function endLife(){
  كان ${jobName()} — ${EDUN[eduRank()]} — ${G.city}.<br>
  السعادة: ${G.happy}٪ — الفلوس: ${fmt(G.money)} — الأولاد: ${N(G.kids)}<br>
  بيعيش بعده: ${rels}</div>
- <div class="card" style="text-align:center"><div style="font-size:44px">${endingInfo().ic}</div><b>النهاية: ${endingInfo().t}</b><div class="pill">${endingInfo().d}</div></div>${posterHTML()}<div class="card" style="line-height:1.8">📖 ${storyText()}</div>${dailyResult()}<div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
+ <div class="card" style="text-align:center"><div style="font-size:44px">${endingInfo().ic}</div><b>النهاية: ${endingInfo().t}</b><div class="pill">${endingInfo().d}</div></div>${posterHTML()}<canvas id="chart" width="720" height="240" style="width:100%;border-radius:12px;background:#1b1530;margin-top:8px"></canvas><div class="card" style="line-height:1.8">📖 ${storyText()}</div>${dailyResult()}<div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
  <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
  modal(_html,a=>{if(a==="share"){shareCard();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
- try{drawPoster();}catch(e){}
+ try{drawPoster();drawChart();}catch(e){}
 }
 
 
@@ -723,6 +733,6 @@ function init(){
   modal(`<h2>أهلًا من تاني</h2><div class="tx">لقيت حياة محفوظة: <b>${G.name}</b> عمر ${N(G.age)}.</div><button class="ch" data-a="c">كمّل ▶️</button><button class="ch" data-a="n">حياة جديدة</button>`,a=>{closeM();if(a==="n"){startScreen();}});return;}}catch(e){}
  startScreen();
 }
-window.__dbg={endLife,startDaily,get G(){return G;},ageUp,newLife,share:shareCard};
+window.__dbg={EV,endLife,startDaily,get G(){return G;},ageUp,newLife,share:shareCard};
 init();
 </script></body></html>
