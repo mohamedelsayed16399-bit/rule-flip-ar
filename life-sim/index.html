@@ -586,6 +586,15 @@ function drawScene(){
  c.fillStyle="#ffe58a";c.fillRect(hx+10,H-40-hh+12,14,12);if(hw>90)c.fillRect(hx+hw-24,H-40-hh+12,14,12);
  // car
  if(G.assets.some(x=>x.id==="car")){c.fillStyle="#d94a4a";c.fillRect(hx+hw+14,H-40-16,48,14);c.fillRect(hx+hw+24,H-40-26,26,12);c.fillStyle="#222";[0,34].forEach(o=>{c.beginPath();c.arc(hx+hw+24+o,H-26,6,0,7);c.fill();});}
+ // clouds + minaret
+ c.fillStyle=t===3?"#ffffff14":"#ffffffaa";[[120,34],[380,22],[600,40]].forEach(q=>{c.beginPath();c.ellipse(q[0],q[1],34,10,0,0,7);c.ellipse(q[0]+22,q[1]-6,20,9,0,0,7);c.fill();});
+ c.fillStyle=t===3?"#4a4062":"#e9dcc0";c.fillRect(655,H-40-70,12,70);c.beginPath();c.moveTo(653,H-110);c.lineTo(661,H-128);c.lineTo(669,H-110);c.fill();c.fillStyle="#ffc857";c.fillRect(660,H-134,2,8);
+ // school (6-18)
+ if(a>=6&&a<=18){c.fillStyle="#e8c35a";c.fillRect(280,H-40-44,70,44);c.fillStyle="#b4453a";c.fillRect(274,H-40-50,82,8);c.fillStyle="#fff";c.fillRect(292,H-40-30,12,12);c.fillRect(326,H-40-30,12,12);c.fillStyle="#333";c.font="10px Tahoma";c.fillText("مدرسة",300,H-40-54);}
+ // cafe
+ if(G.flags&&G.flags.cafe){c.fillStyle="#7a4a2a";c.fillRect(560,H-40-40,60,40);c.fillStyle="#3b8f6a";c.fillRect(555,H-40-48,70,10);c.fillStyle="#fff";c.font="11px Tahoma";c.textAlign="center";c.fillText("كافيه",590,H-40-52);c.textAlign="left";c.fillStyle="#ffe58a";c.fillRect(570,H-40-30,14,12);}
+ // dog
+ if(has("dog")){const dx=470;c.fillStyle="#b97a3a";c.fillRect(dx,H-40-14,22,10);c.fillRect(dx+18,H-40-20,10,10);c.fillRect(dx-5,H-40-18,6,3);c.fillStyle="#222";c.fillRect(dx+3,H-40-4,3,6);c.fillRect(dx+16,H-40-4,3,6);}
  // person
  const px=420,sc=a<3?.55:a<13?.75:a<18?.9:1,fy=H-40;
  const col=G.male?"#3a7bd5":"#d5527a";
@@ -595,6 +604,7 @@ function drawScene(){
  c.fillStyle="#f1c9a0";c.beginPath();c.arc(0,-54,10,0,7);c.fill();
  c.fillStyle=a>=60?"#ddd":G.male?"#2b1b10":"#4a2a14";c.beginPath();c.arc(0,-57,10,Math.PI,0);c.fill();
  if(!G.male&&a>=6){c.fillRect(-11,-57,4,22);c.fillRect(7,-57,4,22);}
+ if(G.edu==='uni'&&a>=22&&a<30){c.fillStyle='#111';c.fillRect(-12,-68,24,4);c.fillRect(-7,-72,14,5);}
  if(a>=65){c.strokeStyle="#7a5230";c.lineWidth=3;c.beginPath();c.moveTo(16,-30);c.lineTo(16,0);c.stroke();}
  c.restore();
  // spouse & kids
@@ -749,6 +759,6 @@ function init(){
   modal(`<h2>أهلًا من تاني</h2><div class="tx">لقيت حياة محفوظة: <b>${G.name}</b> عمر ${N(G.age)}.</div><button class="ch" data-a="c">كمّل ▶️</button><button class="ch" data-a="n">حياة جديدة</button>`,a=>{closeM();if(a==="n"){startScreen();}});return;}}catch(e){}
  startScreen();
 }
-window.__dbg={EV,endLife,startDaily,get G(){return G;},ageUp,newLife,share:shareCard};
+window.__dbg={drawScene,EV,endLife,startDaily,get G(){return G;},ageUp,newLife,share:shareCard};
 init();
 </script></body></html>
