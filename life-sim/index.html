@@ -561,7 +561,7 @@ function drawChart(){
 }
 function endLife(){
  flush();
- META_.lives++;META_.best=Math.max(META_.best,score());
+ META_.lives++;META_.best=Math.max(META_.best,score());try{META_.hall=META_.hall||[];META_.hall.push({n:G.name,a:G.age,s:score(),e:endingInfo().t,i:endingInfo().ic});META_.hall.sort((x,y)=>y.s-x.s);META_.hall=META_.hall.slice(0,5);}catch(e){}
  if(G.age>=90)ach("old");if(G.age>=100)ach("cent");if(G.happy>=70)ach("pass");
  const lg=legacy();META_.legacy=lg;saveMeta();
  localStorage.removeItem(SAVE);
@@ -773,7 +773,7 @@ function startScreen(){
  $("#age").style.display="none";
  $("#nm").textContent="حياة جديدة";$("#sub").textContent="";$("#money").textContent="";$("#stats").innerHTML="";$("#av").textContent="🍼";$("#main").innerHTML="";
  let h=`<h2>🍼 عِش حياتك</h2><div class="tx">هتتولد وتعيش حياة كاملة: مدرسة، ثانوية عامة، جامعة، جيش، شغل، جواز، أولاد، وشيخوخة. كل قرار بيأثر. وكل حياة مختلفة.</div>
- <div class="pill">الحيوات السابقة: ${N(META_.lives)} · أفضل نتيجة: ${N(META_.best)}${META_.legacy?` · ميراث جاهز: ${fmt(META_.legacy)}`:""}</div>
+ ${(META_.hall&&META_.hall.length)?`<div class="card"><b>🏆 قاعة المشاهير</b>${META_.hall.map((h,i)=>`<div style="padding:4px 0">${i+1}. ${h.n} · ${N(h.a)} سنة · ${h.e} · ⭐${N(h.s)}</div>`).join("")}</div>`:""}<div class="pill">الحيوات السابقة: ${N(META_.lives)} · أفضل نتيجة: ${N(META_.best)}${META_.legacy?` · ميراث جاهز: ${fmt(META_.legacy)}`:""}</div>
  <div style="margin:8px 0">${Object.entries(DF).map(([k,v])=>`<button class="btn ${DIFF===k?"p":""}" data-d="${k}">${v.n}</button>`).join("")}</div>
  <input type="text" id="nameIn" placeholder="اسمك" maxlength="14" value="">
  <button class="ch" data-a="m">👦 ولد</button><button class="ch" data-a="f">👧 بنت</button><button class="ch" data-a="r">🎲 عشوائي بالكامل</button><button class="ch" data-a="daily">🌍 تحدي اليوم (نفس الحياة لكل الناس)<small>${GOALS?GOALS[dailyKey()%GOALS.length][1]:""}</small></button>`;
@@ -785,6 +785,6 @@ function init(){
   modal(`<h2>أهلًا من تاني</h2><div class="tx">لقيت حياة محفوظة: <b>${G.name}</b> عمر ${N(G.age)}.</div><button class="ch" data-a="c">كمّل ▶️</button><button class="ch" data-a="n">حياة جديدة</button>`,a=>{closeM();if(a==="n"){startScreen();}});return;}}catch(e){}
  startScreen();
 }
-window.__dbg={drawScene,EV,endLife,startDaily,get G(){return G;},ageUp,newLife,share:shareCard};
+window.__dbg={get META(){return META_;},startScreen,drawScene,EV,endLife,startDaily,get G(){return G;},ageUp,newLife,share:shareCard};
 init();
 </script></body></html>
