@@ -322,6 +322,10 @@ E({id:"ch_kite",a:5,b:12,w:4,t:"العيال في الشارع بيلعبوا ك
 E({id:"ch_grand",a:5,b:12,w:3,t:"جدتك بتعمل طبخ عيد وعايزاك تساعدها في العجين.",c:[{t:"أساعدها وأتعلم منها 👵",f(){stat("happy",7);stat("faith",3);addLog("👵 اتعلمت من جدتك وصفة الكحك.","good");}},{t:"ألعب بالموبايل",f(){stat("happy",3);stat("smarts",-1);}}]});
 E({id:"ch_trip",a:6,b:13,w:3,t:"المدرسة عاملة رحلة للأهرامات والمتحف.",c:[{t:"أروح وأشتري تذكار 🏺",f(){money(-200,"تذكار");stat("happy",7);stat("smarts",3);}},{t:"أفضل في البيت",f(){}}]});
 E({id:"ch_ill",a:3,b:12,w:3,t:"عيّنت بدور برد شديد وأمك قلقانة.",c:[{t:"أروح للدكتور مع أمي 🩺",f(){money(-300,"كشف");stat("health",3);}},{t:"عشبة جدتي وشوربة",f(){stat("health",1);stat("happy",3);}}]});
+// قصة ١٦: الأمانة
+E({id:"bt0",a:25,b:55,w:3,ok:()=>!(G.chains||{}).bt&&G.money>=40000,t:"زميل قديم بيطلب منك سلفة ٤٠ ألف وبيوعدك يرجعها بعد شهرين.",c:[{t:"أسلفه 💸",f(){money(-40000,"سلفة لزميل");chainSet("bt",1);}},{t:"أعتذر بلطف",f(){chainSet("bt",9);}}]});
+E({id:"bt1",a:25,b:60,w:99,ok:()=>chainOk("bt",1,1)&&!G.flags.ev_bt1,t:"عدى شهرين وزميلك مش بيرد على تليفوناتك.",c:[{t:"أروحله البيت وأطالبه",f(){G.flags.ev_bt1=1;chainSet("bt",2);stat("stress",5);}},{t:"أنسى الموضوع",f(){G.flags.ev_bt1=1;chainSet("bt",9);stat("stress",3);stat("faith",3);addLog("🌿 سامحت وسبت الفلوس لربنا.","good");}}]});
+E({id:"bt2",a:26,b:62,w:99,ok:()=>chainOk("bt",2,1)&&!G.flags.ev_bt2,t:"طلع إن زميلك اتورط في ديون كتير. بيعتذر لك وبيطلب مهلة.",c:[{t:"أديله مهلة ٦ شهور 🤝",f(){G.flags.ev_bt2=1;chainSet("bt",9);if(R()<.6){money(40000,"رجّع لك الفلوس");stat("happy",8);addLog("🤝 رجّع لك فلوسك وزادت المحبة بينكم.","big");}else{stat("happy",-5);addLog("😔 ما رجعش الفلوس.","bad");}}},{t:"أرفع عليه قضية ⚖️",f(){G.flags.ev_bt2=1;chainSet("bt",9);money(-8000,"قضية");if(R()<.5)money(40000,"استردّيت الفلوس");stat("stress",6);}}]});
 function loseJob(why){if(!G.job)return;addLog("👋 "+why+" من وظيفة "+G.job.n+".","bad");G.job=null;G.salary=0;G.jobYears=0;}
 function jail(){const y=ri(1,4);addLog("⛓️ اتسجنت "+y+" سنين.","bad");ach("prison");stat("happy",-30);stat("health",-12);G.flags.jailLeft=y;loseJob("اتحبست");G.crimeRec=Math.max(0,G.crimeRec-1);}
 
@@ -479,7 +483,7 @@ function checkDeath(){
  if(G.health<=0)p=1;
  if(R()<p*(DF[G.diff||'mid']||DF.mid).die){
   G.dead=true;
-  const c=G.health<20?"مرض مزمن":G.age>80?"كبر السن":pick(["أزمة قلبية","هدوء تام في النوم","حادثة"]);
+  const c=G.health<20?(G.age<50?pick(["مرض مزمن","التهاب حاد","مضاعفات عملية"]):pick(["مرض مزمن","فشل في القلب","مضاعفات السكر","التهاب رئوي","جلطة"])):G.age>80?pick(["كبر السن","هدوء تام في النوم","وفاة طبيعية بين أحبابك"]):pick(["أزمة قلبية","هدوء تام في النوم","حادثة","جلطة مفاجئة"]);
   G.causeOfDeath=c;endLife();
  }
 }
