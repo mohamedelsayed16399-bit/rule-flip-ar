@@ -436,8 +436,12 @@ function jobOptions(){
 }
 function eduRank(){return G.edu==="phd"?3:G.edu==="uni"?2:G.edu==="hs"?1:0;}
 function applyJob(j){
- const chance=.35+G.smarts/200+(G.social/400)+(eduRank()>=j.edu?.1:0)+(G.flags.draftDodge?-.3:0);
  if(G.mil==="serving"||G.flags.jailLeft){toast("مش ممكن دلوقتي");return;}
+ miniQuiz("💼 اختبار القبول: "+j.n,"٣ أسئلة قدرات سريعة قبل المقابلة. كل إجابة صح بتزوّد فرصتك!",3,(ok,n)=>applyJobFinal(j,(ok-1)*.12));
+}
+function applyJobFinal(j,bonus){
+ const chance=.35+G.smarts/200+(G.social/400)+(eduRank()>=j.edu?.1:0)+(G.flags.draftDodge?-.3:0)+bonus;
+ addLog("🧠 اختبار القبول: "+(bonus>=.24?"أداء ممتاز":bonus>=0?"أداء مقبول":"أداء ضعيف"));
  if(R()<chance){G.job=j;G.salary=Math.round(j.sal*(.9+R()*.3));G.jobYears=0;G.perf=55;addLog(`✅ اتقبلت كـ${j.n} بمرتب ${fmt(G.salary)} سنويًا.`,"good");if(j.id==="doc")ach("doc");stat("happy",8);}
  else{addLog(`❌ اترفضت من وظيفة ${j.n}.`,"bad");stat("happy",-4);}
  closeM();flush();render();save();
