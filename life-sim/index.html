@@ -71,7 +71,7 @@ const saveMeta=()=>localStorage.setItem(META,JSON.stringify(META_));
 const ACH={
  grad:["🎓","خريج","خلّص الجامعة"],rich:["💰","مليونير","وصّل فلوسك لمليون"],old:["👴","عمر طويل","عِش لحد ٩٠"],cent:["💯","المعمّر","عِش لحد ١٠٠"],
  hajj:["🕋","حجّ بيت الله","أدّي الحج"],wed:["💍","اتجوزت","اتجوز"],kids:["👶","بيت عامر","خلّف ٣ أولاد أو أكتر"],doc:["🩺","دكتور","اشتغل دكتور"],
- boss:["🏢","صاحب شركة","افتح شركتك"],cat:["🐱","صاحب القطة","اتبنى قطة وكبّرها"],marathon:["🏃","عدّاء ماراثون","خلّص ماراثون"],hajj:["🕋","حاج","أدّي فريضة الحج"],khair:["🤲","من أهل الخير","كمّل قصة لجنة الخير في رمضان"],hobwin:["🏅","بطل الهواية","اكسب مسابقة في هوايتك"],hobbiz:["🚀","هواية بتكسب","حوّل هوايتك لمشروع ناجح"],trav:["🧳","رحّالة","كمّل رحلة السفر الكبيرة"],fame:["⭐","مشهور","وصّل الشهرة ٨٠"],prison:["⛓️","ورا الشمس","اتسجن"],mil:["🪖","خدمت الوطن","خلّص الجيش"],
+ boss:["🏢","صاحب شركة","افتح شركتك"],gen2:["🧬","الجيل التاني","كمّل بحياة ابنك أو بنتك"],gen3:["👑","سلالة","وصّل للجيل التالت"],cat:["🐱","صاحب القطة","اتبنى قطة وكبّرها"],marathon:["🏃","عدّاء ماراثون","خلّص ماراثون"],hajj:["🕋","حاج","أدّي فريضة الحج"],khair:["🤲","من أهل الخير","كمّل قصة لجنة الخير في رمضان"],hobwin:["🏅","بطل الهواية","اكسب مسابقة في هوايتك"],hobbiz:["🚀","هواية بتكسب","حوّل هوايتك لمشروع ناجح"],trav:["🧳","رحّالة","كمّل رحلة السفر الكبيرة"],fame:["⭐","مشهور","وصّل الشهرة ٨٠"],prison:["⛓️","ورا الشمس","اتسجن"],mil:["🪖","خدمت الوطن","خلّص الجيش"],
  trav:["✈️","رحّالة","سافر ٥ مرات"],pass:["🕊️","حياة بسيطة","مت وإنت راضي (سعادة ٧٠+)"],book:["📚","كاتب","اطبع كتاب"],lotto:["🎰","حظّ","اكسب جائزة كبيرة"],
  fam:["👨‍👩‍👧‍👦","جد وجدة","بقى عندك أحفاد"],poor:["🌱","من الصفر","ابدأ في أسرة فقيرة وعدّي ٥٠٠ ألف"],villa:["🏡","فيلا الساحل","اشتري فيلا"],all:["🧩","متكامل","صحة وذكاء وجمال وعلاقات ٧٠+ بعد الأربعين"],faith:["🌙","القلب المطمئن","إيمان ٩٠٪ بعد الأربعين"],abroad:["🛫","مغترب","اشتغل بره مصر"],gm:["🏆","المتفوق","جيب مجموع ٩٥٪+ في الثانوية"]
 ,
@@ -92,7 +92,7 @@ function toast(t){beep(880,.12);const e=$("#toast");e.textContent=t;e.style.disp
 /* ---------- الحياة ---------- */
 const STAGES=[[0,"رضيع","👶"],[3,"طفل","🧒"],[6,"تلميذ","🎒"],[13,"مراهق","🧑"],[18,"شاب","🧑‍🎓"],[30,"بالغ","🧔"],[50,"كبير","👨‍🦳"],[65,"مسن","👴"]];
 const stage=a=>{let s=STAGES[0];for(const x of STAGES)if(a>=x[0])s=x;return s;};
-function newLife(name,male){
+function newLife(name,male,heir){
  const bonus=META_.legacy;
  const fam=pick([{n:"أسرة بسيطة",m:3000,w:0},{n:"أسرة متوسطة",m:15000,w:1},{n:"أسرة ميسورة",m:60000,w:2},{n:"أسرة فقيرة",m:0,w:-1}]);
  G={name,male,age:0,city:pick(CITIES),smarts:ri(25,75),looks:ri(25,75),health:ri(65,95),happy:ri(55,80),social:ri(30,60),stress:10,
@@ -107,6 +107,7 @@ function newLife(name,male){
  G.rels.push({id:"dad",t:"أب",n:mname()+" "+G.surname,ic:"👨",bond:ri(50,90),age:ri(24,40),alive:true});
  G.rels.push({id:"mom",t:"أم",n:fname()+" "+G.surname,ic:"👩",bond:ri(60,95),age:ri(22,38),alive:true});
  const sib=ri(0,3);for(let i=0;i<sib;i++){const m=R()<.5;G.rels.push({id:"sib"+i,t:m?"أخ":"أخت",n:(m?mname():fname())+" "+G.surname,ic:m?"👦":"👧",bond:ri(30,85),age:ri(0,10),alive:true,sib:true});}
+ if(heir){try{G.gen=(heir.gen||1)+1;G.lineage=(heir.lineage||[]).slice();G.surname=heir.surname;const nw=heir.nw||0;const t=nw>=2000000?["أسرة ثرية",250000,3]:nw>=400000?["أسرة ميسورة",80000,2]:nw>=80000?["أسرة متوسطة",20000,1]:nw>=0?["أسرة بسيطة",3000,0]:["أسرة بسيطة",0,0];G.famName=t[0];G.famMoney=t[1];G.wealthLvl=t[2];const pr=heir.male?G.rels.find(r=>r.id==="dad"):G.rels.find(r=>r.id==="mom"),oth=heir.male?G.rels.find(r=>r.id==="mom"):G.rels.find(r=>r.id==="dad");pr.n=heir.name+" "+heir.surname;pr.age=ri(26,40);pr.heirParent=1;if(heir.spouse)oth.n=heir.spouse;oth.age=ri(24,38);if(heir.traits&&heir.traits.length){const it=heir.traits[ri(0,heir.traits.length-1)];if(!G.traits.includes(it))G.traits[0]=it;}G.heirOf=heir.name;addLog("🧬 أنت الجيل "+N(G.gen)+" من العيلة. "+(heir.male?"أبوك":"أمك")+" "+heir.name+" ورّثك اسم العيلة"+(heir.traits&&heir.traits.length?" وجزء من طباعه":"")+".","big");ach("gen2");if(G.gen>=3)ach("gen3");}catch(e){}}
  if(bonus>0){G.money+=bonus;addLog("🕊️ ورثت من حياتك السابقة "+fmt(bonus)+" أمانة.","good");META_.legacy=0;saveMeta();}
  addLog('سماتك: '+G.traits.map(t=>TRAITS[t][0]+' '+TRAITS[t][1]).join('، '),'big');
  addLog(`وُلدت في ${G.city}، في ${G.famName}. ${G.male?"ولد":"بنت"} جديد اسمه ${name} 🍼`,"big");
@@ -653,7 +654,7 @@ function endLife(){
  flush();
  META_.lives++;META_.best=Math.max(META_.best,score());try{META_.hall=META_.hall||[];META_.hall.push({n:G.name,a:G.age,s:score(),e:endingInfo().t,i:endingInfo().ic});META_.hall.sort((x,y)=>y.s-x.s);META_.hall=META_.hall.slice(0,5);}catch(e){}
  if(G.age>=90)ach("old");if(G.age>=100)ach("cent");if(G.happy>=70)ach("pass");
- const lg=legacy();META_.legacy=lg;saveMeta();
+ const lg=legacy();META_.legacy=lg;try{const en0=endingInfo();const ln=(G.lineage||[]).concat([{n:G.name,a:G.age,e:en0.t,i:en0.ic,g:G.gen||1}]);META_.lineage=ln.slice(-8);if(G.kids>=1&&G.rels.some(r=>r.kid&&r.alive)){const sp=G.rels.find(r=>r.id==="spouse");META_.heir={name:G.name,male:G.male,surname:G.surname,gen:G.gen||1,nw:G.money+(typeof invTotal==='function'?invTotal():0),traits:G.traits,spouse:sp?sp.n:"",lineage:META_.lineage};}else META_.heir=null;}catch(e){}saveMeta();
  localStorage.removeItem(SAVE);
  const sc=score();
  const miles=G.log.flatMap(y=>y.items.filter(i=>i.c==='big').map(i=>`<div class="row"><div class="t">${N(y.age)} سنة<small>${i.t}</small></div></div>`)).slice(0,14).join('');
@@ -663,8 +664,8 @@ function endLife(){
  السعادة: ${G.happy}٪ — الفلوس: ${fmt(G.money)} — الأولاد: ${N(G.kids)}<br>
  بيعيش بعده: ${rels}</div>
  <div class="card" style="text-align:center"><div style="font-size:44px">${endingInfo().ic}</div><b>النهاية: ${endingInfo().t}</b><div class="pill">${endingInfo().d}</div></div>${posterHTML()}<canvas id="chart" width="720" height="240" style="width:100%;border-radius:12px;background:#1b1530;margin-top:8px"></canvas><div class="card" style="line-height:1.8">📖 ${storyText()}</div>${dailyResult()}<div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
- <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="copy">📋 انسخ ملخص حياتي كنص</button><button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
- modal(_html,a=>{if(a==="copy"){const en=endingInfo();const tx=`🕊️ عِش حياتك\n${G.name} عاش ${N(G.age)} سنة في ${G.city}\nالنهاية: ${en.t}\nالفلوس: ${fmt(G.money)} | الأولاد: ${N(G.kids)} | السعادة: ${N(G.happy)}٪\n⭐ نتيجتي: ${N(score())}\nجرّب إنت: https://mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim/`;try{navigator.clipboard.writeText(tx).then(()=>toast("اتنسخ الملخص ✅"),()=>toast("مقدرتش أنسخ"));}catch(e){toast("مقدرتش أنسخ");}return;}if(a==="share"){shareCard();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
+ <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="copy">📋 انسخ ملخص حياتي كنص</button>${META_.heir?`<button class="ch" data-a="heir" style="background:linear-gradient(90deg,#4cd68a,#2e9e57);color:#06210f">🧬 كمّل بحياة ابنك/بنتك (الجيل ${N((META_.heir.gen||1)+1)})</button>`:""}<button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
+ modal(_html,a=>{if(a==="copy"){const en=endingInfo();const tx=`🕊️ عِش حياتك\n${G.name} عاش ${N(G.age)} سنة في ${G.city}\nالنهاية: ${en.t}\nالفلوس: ${fmt(G.money)} | الأولاد: ${N(G.kids)} | السعادة: ${N(G.happy)}٪\n⭐ نتيجتي: ${N(score())}\nجرّب إنت: https://mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim/`;try{navigator.clipboard.writeText(tx).then(()=>toast("اتنسخ الملخص ✅"),()=>toast("مقدرتش أنسخ"));}catch(e){toast("مقدرتش أنسخ");}return;}if(a==="share"){shareCard();return;}if(a==="heir"){startHeir();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
  try{drawPoster();drawChart();}catch(e){}
 }
 
@@ -761,7 +762,7 @@ function render(){
  $("#av").textContent=G.dead?"🪦":s[2];
  document.body.style.background=G.age<13?"#1b2a4a":G.age<30?"#1b1530":G.age<60?"#1a2a2a":"#2a2218";
  $("#nm").textContent=G.name+" "+G.surname;
- $("#sub").textContent=`${N(G.age)} سنة · ${s[1]} · ${G.city}${G.job?" · "+jobName():G.school?(G.school.t==="u"?" · طالب جامعي":" · تلميذ"):""}`;
+ $("#sub").textContent=`${N(G.age)} سنة · ${s[1]} · ${G.city}${G.gen>1?" · الجيل "+N(G.gen):""}${G.job?" · "+jobName():G.school?(G.school.t==="u"?" · طالب جامعي":" · تلميذ"):""}`;
  $("#money").innerHTML=`${fmt(G.money)}<div class="pill">${G.debt>0?"دين "+fmt(G.debt):""}</div>`;
  $("#stats").innerHTML=bar("❤️ صحة",G.health,"#ff5d6c")+bar("😊 سعادة",G.happy,"#ffc857")+bar("🧠 ذكاء",G.smarts,"#4ea8ff")+bar("✨ جمال",G.looks,"#c07cff")+bar("🤝 علاقات",G.social,"#4cd68a")+bar("😰 توتر",G.stress,"#ff9d3d");
 drawScene();
@@ -775,7 +776,7 @@ drawScene();
   h+="</div>";
  }
  if(tab==="rel"){
-  h+=famTree();
+  h+=lineageCard();h+=famTree();
   h+=`<div class="card"><b>عيلتك وأصحابك</b>`;
   G.rels.forEach(r=>{h+=`<div class="row"><div class="ic">${r.alive?r.ic:"🪦"}</div><div class="t">${r.n}<small>${r.t} · ${N(r.age)} سنة${r.alive?"":" · متوفى"}${r.mem&&r.mem.length?`<br>💭 ${r.mem[r.mem.length-1]}`:""}</small>${r.alive?`<div class="st"><div class="bar"><i style="width:${r.bond}%;background:var(--g)"></i></div></div>`:""}</div>${r.alive?`<button class="btn" data-rel="${r.id}">قضّي وقت</button>`:""}</div>`;});
   h+="</div>";
@@ -871,6 +872,8 @@ function startDaily(){
  closeM();newLife(pick(MN)+"",R()<.5);G.daily={k,goal:k%GOALS.length};
  addLog("🌍 تحدي اليوم: "+goal[1],"big");flush();render();save();
 }
+function startHeir(){const h=META_.heir;if(!h)return;closeM();const m=R()<.5;META_.heir=null;saveMeta();newLife(m?mname():fname(),m,h);}
+function lineageCard(){const l=(META_.lineage||[]);if(!G||!G.gen||l.length<1)return"";const all=(G.lineage||[]);return `<div class="card"><b>🧬 سلالة العيلة (الجيل ${N(G.gen)})</b>${all.map(x=>`<div class="row"><div class="ic">${x.i||"🕊️"}</div><div class="t">${x.n}<small>الجيل ${N(x.g||1)} · عاش ${N(x.a)} سنة · ${x.e}</small></div></div>`).join("")}</div>`;}
 function startScreen(){
  rng=Math.random;
  G=null;$("#log").innerHTML="";
@@ -880,8 +883,8 @@ function startScreen(){
  ${(META_.hall&&META_.hall.length)?`<div class="card"><b>🏆 قاعة المشاهير</b>${META_.hall.map((h,i)=>`<div style="padding:4px 0">${i+1}. ${h.n} · ${N(h.a)} سنة · ${h.e} · ⭐${N(h.s)}</div>`).join("")}</div>`:""}<div class="pill">الحيوات السابقة: ${N(META_.lives)} · أفضل نتيجة: ${N(META_.best)}${META_.legacy?` · ميراث جاهز: ${fmt(META_.legacy)}`:""}</div>
  <div style="margin:8px 0">${Object.entries(DF).map(([k,v])=>`<button class="btn ${DIFF===k?"p":""}" data-d="${k}">${v.n}</button>`).join("")}</div>
  <input type="text" id="nameIn" placeholder="اسمك" maxlength="14" value="">
- <button class="ch" data-a="m">👦 ولد</button><button class="ch" data-a="f">👧 بنت</button><button class="ch" data-a="r">🎲 عشوائي بالكامل</button><button class="ch" data-a="daily">🌍 تحدي اليوم (نفس الحياة لكل الناس)<small>${GOALS?GOALS[dailyKey()%GOALS.length][1]:""}</small></button>`;
- modal(h,a=>{if(a.length===0)return;if(a==="daily"){startDaily();return;}let m=a==="m";if(a==="r")m=R()<.5;let n=($("#nameIn").value||"").trim()||(m?mname():fname());closeM();newLife(n,m);});
+ <button class="ch" data-a="m">👦 ولد</button><button class="ch" data-a="f">👧 بنت</button><button class="ch" data-a="r">🎲 عشوائي بالكامل</button>${META_.heir?`<button class="ch" data-a="heir" style="background:linear-gradient(90deg,#4cd68a,#2e9e57);color:#06210f">🧬 كمّل السلالة: ابن/بنت ${META_.heir.name} (الجيل ${N((META_.heir.gen||1)+1)})</button>`:""}<button class="ch" data-a="daily">🌍 تحدي اليوم (نفس الحياة لكل الناس)<small>${GOALS?GOALS[dailyKey()%GOALS.length][1]:""}</small></button>`;
+ modal(h,a=>{if(a.length===0)return;if(a==="daily"){startDaily();return;}if(a==="heir"){startHeir();return;}let m=a==="m";if(a==="r")m=R()<.5;let n=($("#nameIn").value||"").trim()||(m?mname():fname());closeM();newLife(n,m);});
 }
 function init(){
  buildBar();
