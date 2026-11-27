@@ -546,7 +546,7 @@ function runEvents(list,done){
  if(!G)return;
  if(!list.length){done();return;}
  const e=list.shift();
- const next=()=>{flush();render();if(G.miniNext){const mm=G.miniNext;G.miniNext=null;G.pending=1;miniMemory(mm.title,mm.sub,mv=>{G.pending=null;try{mm.done(mv);}catch(x){}clamp();flush();render();runEvents(list,done);});return;}runEvents(list,done);};
+ const next=()=>{if(!G)return;flush();render();if(G.miniNext){const mm=G.miniNext;G.miniNext=null;G.pending=1;miniMemory(mm.title,mm.sub,mv=>{G.pending=null;try{mm.done(mv);}catch(x){}clamp();flush();render();runEvents(list,done);});return;}runEvents(list,done);};
  if(e.id==="twgame"){G.pending=1;addLog("• امتحان الثانوية العامة: اللحظة الحاسمة");miniQuiz("📝 امتحان الثانوية العامة","جاوب بسرعة، كل سؤال ليه ٨ ثواني!",5,(ok,n)=>{G.pending=null;const b=(ok-2)*2;if(G.flags.twScored){G.gpa=cl((G.gpa||50)+b);addLog("📝 أدائك في الامتحان ("+N(ok)+" من "+N(n)+") خلّى المجموع "+(b>=0?"يزيد ":"ينقص ")+N(Math.abs(b))+"٪ ليبقى "+N(G.gpa)+"٪.","big");}else G.flags.twBonus=b;if(ok>=n)ach("quiz5");stat("stress",ok>=3?-3:6);G.flags.twDone=1;runEvents(list,done);});return;}
  if(e.id==="univ"){if(G.edu!=="hs"&&!G.gpa){G.gpa=cl(G.smarts*.4+30);}G.pending=1;uniChoice(()=>{G.pending=null;runEvents(list,done);});return;}
  const cs=e.c.filter(c=>!c.ok||c.ok());
@@ -592,6 +592,25 @@ function shareCard(){
  cv.toBlob(b=>{const f=new File([b],"my-life.png",{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:"حياتي"}).catch(()=>{});}else{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="my-life.png";a.click();}});
 }
 
+
+function tlMiles(){const m=[];G.log.forEach(y=>y.items.forEach(i=>{if(i.c==='big')m.push({a:y.age,t:String(i.t).replace(/<[^>]*>/g,"")});}));if(m.length>9){const o=[];for(let k=0;k<9;k++)o.push(m[Math.round(k*(m.length-1)/8)]);return o;}return m;}
+function timelineCanvas(){
+ const ms=tlMiles(),H=Math.max(1350,520+ms.length*150+260);
+ const cv=document.createElement("canvas");cv.width=1080;cv.height=H;const c=cv.getContext("2d");c.direction="rtl";
+ const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,"#2b3a70");g.addColorStop(1,"#1b1530");c.fillStyle=g;c.fillRect(0,0,1080,H);
+ c.textAlign="center";c.fillStyle="#ffc857";c.font="bold 60px Tahoma,sans-serif";c.fillText("🗺️ خط حياة "+G.name,540,110);
+ c.fillStyle="#a99fcb";c.font="40px Tahoma,sans-serif";c.fillText("عاش "+N(G.age)+" سنة في "+G.city+(G.gen>1?" · الجيل "+N(G.gen):""),540,175);
+ const x0=860,y0=300,y1=H-230;c.strokeStyle="#ffc857";c.lineWidth=8;c.beginPath();c.moveTo(x0,y0-40);c.lineTo(x0,y1);c.stroke();
+ ms.forEach((m,i)=>{const y=y0+i*150;c.fillStyle="#ffc857";c.beginPath();c.arc(x0,y,24,0,7);c.fill();c.fillStyle="#1b1530";c.font="bold 26px Tahoma,sans-serif";c.textAlign="center";c.fillText(N(m.a),x0,y+9);
+  c.fillStyle="#2a2147";c.fillRect(110,y-52,690,104);c.fillStyle="#fff";c.textAlign="right";c.font="34px Tahoma,sans-serif";
+  const w=m.t.split(" ");let l1="",l2="";w.forEach(x=>{if((l1+" "+x).length<=34&&!l2)l1+=(l1?" ":"")+x;else l2+=(l2?" ":"")+x;});if(l2.length>36)l2=l2.slice(0,35)+"…";
+  c.fillText(l1,780,l2?y-6:y+12);if(l2)c.fillText(l2,780,y+38);});
+ if(!ms.length){c.fillStyle="#a99fcb";c.textAlign="center";c.font="40px Tahoma,sans-serif";c.fillText("حياة هادية بدون محطات كبيرة",540,500);}
+ c.textAlign="center";c.fillStyle="#ffc857";c.font="bold 70px Tahoma,sans-serif";c.fillText("⭐ "+N(score()),540,H-120);
+ c.fillStyle="#a99fcb";c.font="32px Tahoma,sans-serif";c.fillText("جرّب إنت: mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim",540,H-60);
+ return cv;}
+function timelineCard(){const cv=timelineCanvas();const u=cv.toDataURL("image/png");
+ modal(`<h3>🗺️ خط حياتك</h3><img src="${u}" style="width:100%;border-radius:12px"><button class="ch" data-a="tshare">📤 شارك الصورة</button><button class="ch" data-a="tclose">رجوع</button>`,a=>{if(a==="tshare"){cv.toBlob(b=>{const f=new File([b],"my-timeline.png",{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:"خط حياتي"}).catch(()=>{});}else{const l=document.createElement("a");l.href=URL.createObjectURL(b);l.download="my-timeline.png";l.click();}});return;}closeM();});}
 
 function storyText(){
  const m=G.male;const pr=(a,b)=>m?a:b;
@@ -670,8 +689,8 @@ function endLife(){
  السعادة: ${G.happy}٪ — الفلوس: ${fmt(G.money)} — الأولاد: ${N(G.kids)}<br>
  بيعيش بعده: ${rels}</div>
  <div class="card" style="text-align:center"><div style="font-size:44px">${endingInfo().ic}</div><b>النهاية: ${endingInfo().t}</b><div class="pill">${endingInfo().d}</div></div>${posterHTML()}<canvas id="chart" width="720" height="240" style="width:100%;border-radius:12px;background:#1b1530;margin-top:8px"></canvas><div class="card" style="line-height:1.8">📖 ${storyText()}</div>${dailyResult()}<div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
- <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="copy">📋 انسخ ملخص حياتي كنص</button>${META_.heir?`<button class="ch" data-a="heir" style="background:linear-gradient(90deg,#4cd68a,#2e9e57);color:#06210f">🧬 كمّل بحياة ابنك/بنتك (الجيل ${N((META_.heir.gen||1)+1)})</button>`:""}<button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
- modal(_html,a=>{if(a==="copy"){const en=endingInfo();const tx=`🕊️ عِش حياتك\n${G.name} عاش ${N(G.age)} سنة في ${G.city}\nالنهاية: ${en.t}\nالفلوس: ${fmt(G.money)} | الأولاد: ${N(G.kids)} | السعادة: ${N(G.happy)}٪\n⭐ نتيجتي: ${N(score())}\nجرّب إنت: https://mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim/`;try{navigator.clipboard.writeText(tx).then(()=>toast("اتنسخ الملخص ✅"),()=>toast("مقدرتش أنسخ"));}catch(e){toast("مقدرتش أنسخ");}return;}if(a==="share"){shareCard();return;}if(a==="heir"){startHeir();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
+ <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="tl">🗺️ شارك خط حياتي (محطات الحياة)</button><button class="ch" data-a="copy">📋 انسخ ملخص حياتي كنص</button>${META_.heir?`<button class="ch" data-a="heir" style="background:linear-gradient(90deg,#4cd68a,#2e9e57);color:#06210f">🧬 كمّل بحياة ابنك/بنتك (الجيل ${N((META_.heir.gen||1)+1)})</button>`:""}<button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
+ modal(_html,a=>{if(a==="copy"){const en=endingInfo();const tx=`🕊️ عِش حياتك\n${G.name} عاش ${N(G.age)} سنة في ${G.city}\nالنهاية: ${en.t}\nالفلوس: ${fmt(G.money)} | الأولاد: ${N(G.kids)} | السعادة: ${N(G.happy)}٪\n⭐ نتيجتي: ${N(score())}\nجرّب إنت: https://mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim/`;try{navigator.clipboard.writeText(tx).then(()=>toast("اتنسخ الملخص ✅"),()=>toast("مقدرتش أنسخ"));}catch(e){toast("مقدرتش أنسخ");}return;}if(a==="share"){shareCard();return;}if(a==="tl"){timelineCard();return;}if(a==="heir"){startHeir();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
  try{drawPoster();drawChart();}catch(e){}
 }
 
