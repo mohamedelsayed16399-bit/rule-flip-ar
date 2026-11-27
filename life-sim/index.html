@@ -84,6 +84,7 @@ const ACH={
  mill5:["💎","٥ مليون","صافي ثروة ٥ مليون"],life80:["🌳","شجرة معمّرة","عِش ٨٠ سنة"],bff:["🧑‍🤝‍🧑","صاحب العمر","خلّي صاحب عمرك لآخر العمر"],derby:["⚽","مشجع أصيل","شوف الديربي"]
 };
 function ach(k){if(META_.ach[k])return;META_.ach[k]=1;saveMeta();toast("🏅 إنجاز: "+ACH[k][1]);}
+try{document.addEventListener('DOMContentLoaded',()=>{const f=localStorage.getItem('life-fs');if(f)document.body.style.fontSize=f+'px';});if(document.body){const f=localStorage.getItem('life-fs');if(f)document.body.style.fontSize=f+'px';}}catch(e){}
 let SND=localStorage.getItem('life-snd')!=='0';let AC=null;
 function beep(f=520,d=.08){if(!SND)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type='sine';g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
 function toast(t){beep(880,.12);const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",2200);}
@@ -119,6 +120,7 @@ function flush(){if(G&&!G.dead){G.hist=G.hist||[];if(!G.hist.length||G.hist[G.hi
 function stat(k,d){const o=G[k];G[k]=cl(G[k]+d);return G[k]-o;}
 function income(){return G.job?G.salary:0;}
 function money(d,why){d=Math.round(d);G.money+=d;if(why)addLog((d>=0?"💵 ":"💸 ")+why+" ("+fmt(d)+")",d>=0?"good":"bad");}
+function fbond(d){const f=rel('fiance')||rel('spouse');if(f)f.bond=cl(f.bond+d);}
 function rel(id){return G.rels.find(r=>r.id===id);}
 function alive(){return G.rels.filter(r=>r.alive);}
 function has(t){return G.tags.includes(t);}
@@ -242,7 +244,7 @@ E({id:"derby",a:12,b:70,w:4,ok:()=>G.flags.team&&G.flags.team!=="none",t:"مات
 E({id:"gamaya",a:22,b:60,w:4,ok:()=>!has("gamaya")&&G.money>20000,t:"أم محمود جارتك بتعمل جمعية ٢٠٠٠ جنيه شهريًا لمدة ١٠ شهور. تدخل؟",c:[{t:"أدخل 🪙",s:"قبض مضمون لو دورك جه",f(){tag("gamaya");G.flags.gamY=G.age;money(-20000,"جمعية (١٠ شهور)");setTimeout(()=>{},0);money(ri(18,22)*1000,"قبضت الجمعية");stat("stress",-2);addLog("الجمعية خلصت تمام. حلوة الجمعيات!","good");}},{t:"لأ",f(){}}]});
 E({id:"dollar",a:20,b:85,w:3,t:"الدولار ارتفع جامد والأسعار كلها بتولع.",c:[{t:"أشتري ذهب أحوّش",ok:()=>G.money>=50000,f(){G.inv=G.inv||{gold:0,stock:0,bond:0};G.money-=50000;G.inv.gold+=50000;addLog("اشتريت ذهب بـ٥٠ ألف.");}},{t:"أشد الحزام",f(){stat("stress",8);money(-5000,"غلاء");}},{t:"أدور على شغل بعمولة دولار",f(){if(R()<.4){money(ri(3,10)*10000,"شغل فريلانس بالدولار");}else stat("stress",4);}}]});
 E({id:"microbus",a:16,b:65,w:4,t:"الميكروباص زحمة ومتأخر على شغلك.",c:[{t:"أركب توك توك",s:"١٠٠ ج",f(){money(-100);}},{t:"أمشي على رجلي",f(){stat("health",2);stat("stress",3);}},{t:"أطلب أوبر",s:"٣٠٠ ج",f(){money(-300);stat("stress",-2);}}]});
-E({id:"shabka",a:24,b:38,w:99,ok:()=>rel("fiance")&&!G.flags.ev_shabka,t:"أهل العروسة عايزين يتفقوا على الشبكة والمهر وقايمة المنقولات. المبلغ كبير.",c:[{t:"أدفع بكرم 💎",s:"١٥٠ ألف",ok:()=>G.money>=150000,f(){G.flags.ev_shabka=1;money(-150000,"شبكة ومهر ومنقولات");rel("fiance").bond=cl(rel("fiance").bond+10);stat("happy",8);}},{t:"نتفق على المتوسط",s:"٨٠ ألف",f(){G.flags.ev_shabka=1;money(-80000,"شبكة ومهر");rel("fiance").bond=cl(rel("fiance").bond+3);}},{t:"أقول إمكانياتي بوضوح",f(){G.flags.ev_shabka=1;rel("fiance").bond=cl(rel("fiance").bond-5);stat("stress",5);}}]});
+E({id:"shabka",a:24,b:38,w:99,ok:()=>rel("fiance")&&!G.flags.ev_shabka,t:"أهل العروسة عايزين يتفقوا على الشبكة والمهر وقايمة المنقولات. المبلغ كبير.",c:[{t:"أدفع بكرم 💎",s:"١٥٠ ألف",ok:()=>G.money>=150000,f(){G.flags.ev_shabka=1;money(-150000,"شبكة ومهر ومنقولات");fbond(+10);stat("happy",8);}},{t:"نتفق على المتوسط",s:"٨٠ ألف",f(){G.flags.ev_shabka=1;money(-80000,"شبكة ومهر");fbond(+3);}},{t:"أقول إمكانياتي بوضوح",f(){G.flags.ev_shabka=1;fbond(-5);stat("stress",5);}}]});
 E({id:"flathunt",a:25,b:40,w:4,ok:()=>!G.assets.some(a=>a.id==="house"),t:"بتدور على شقة. السماسرة بيطلبوا أرقام كبيرة والإيجار القديم مبقاش موجود.",c:[{t:"إيجار جديد في مدينة نصر",s:"٣٦ ألف سنويًا",f(){money(-36000,"إيجار سنة");stat("stress",3);}},{t:"قسط شقة في مدينة جديدة",s:"مقدم ٢٠٠ ألف",ok:()=>G.money>=200000,f(){money(-200000,"مقدم شقة");G.assets.push({id:"house",ic:"🏠",n:"شقة بالقسط",v:900000});stat("happy",10);addLog("🏠 اشتريت شقة بالتقسيط!","big");}},{t:"أفضل في بيت العيلة",f(){stat("happy",-2);rel("mom")&&(rel("mom").bond=cl(rel("mom").bond+3));}}]});
 E({id:"thanaweyaSon",a:40,b:55,w:5,ok:()=>G.rels.some(r=>r.kid&&r.alive&&r.age>=16&&r.age<=18),t:"ابنك/بنتك في الثانوية العامة والبيت كله في حالة طوارئ.",c:[{t:"أدعمه وأوفرله دروس",s:"٥٠ ألف",f(){money(-50000,"دروس الثانوية لابنك");stat("stress",8);}},{t:"أثق فيه وأسيبه",f(){stat("stress",3);}}]});
 E({id:"nilefeast",a:6,b:90,w:4,t:"شم النسيم! فسيخ ورنجة وبصل أخضر على النيل.",c:[{t:"نخرج على الكورنيش 🌿",f(){stat("happy",8);stat("social",4);if(R()<.15){addLog("المعدة اتعبت من الفسيخ 😅","bad");stat("health",-4);}}},{t:"أقعد في البيت",f(){}}]});
@@ -704,7 +706,7 @@ drawScene();
  if(tab==="me"){
   h+=`<div class="card"><b>🧬 حياتك دي</b><div>${(G.traits||[]).map(t=>`<span class="tag">${TRAITS[t][0]} ${TRAITS[t][1]}</span>`).join('')}</div><div class="pill">الإيمان ${G.faith}٪ · الشهرة ${G.fame}٪ · سفر ${G.travel} مرات · سجل جنائي ${G.crimeRec}</div><div class="pill">عدد الحيوات: ${N(META_.lives)} · أفضل نتيجة ${N(META_.best)}</div></div><div class="card"><b>🏅 الإنجازات (${Object.keys(META_.ach).length}/${Object.keys(ACH).length})</b>`;
   Object.entries(ACH).forEach(([k,a])=>h+=`<div class="row ach ${META_.ach[k]?"got":""}"><div class="ic">${a[0]}</div><div class="t">${a[1]}<small>${a[2]}</small></div></div>`);
-  h+=`</div><button class="btn" id="snd">${SND?'🔊 الصوت شغال':'🔇 الصوت مقفول'}</button> <button class="btn" id="reset">🗑️ ابدأ حياة جديدة (هتفقد دي)</button>`;
+  h+=`</div><button class="btn" id="snd">${SND?'🔊 الصوت شغال':'🔇 الصوت مقفول'}</button> <button class="btn" id="fs">🔠 حجم الخط</button> <button class="btn" id="help">❓ مساعدة وإحصائيات</button> <button class="btn" id="reset">🗑️ ابدأ حياة جديدة (هتفقد دي)</button>`;
  }
  m.innerHTML=h;
  $("#age").style.display=G.dead?"none":"block";
@@ -715,6 +717,8 @@ $("#main").addEventListener("click",e=>{
  if(t.dataset.job){applyJob(JOBS.find(j=>j.id===t.dataset.job));}
  if(t.id==="quit"){loseJob("استقلت");flush();render();save();}
  if(t.id==="phd"){G.school={t:"u",y:1,fac:"grad"};money(-90000);addLog("بدأت دراسات عليا.");G.flags.phd=1;flush();render();save();}
+ if(t.id==="fs"){const cur=Number(localStorage.getItem('life-fs')||16),nx=cur>=22?14:cur+2;localStorage.setItem('life-fs',nx);document.body.style.fontSize=nx+"px";toast("حجم الخط "+N(nx));}
+ if(t.id==="help"){modal(`<h2>❓ إزاي تلعب</h2><div class="tx">• كل سنة بتعدّي بالضغط على زرار السن، وبتقابلك أحداث وقرارات.<br>• القرارات بتأثر على صحتك وفلوسك وعلاقاتك وسعادتك.<br>• فيه قصص بتمتد سنين (أرض العيلة، المشروع، الجواز، الغربة...).<br>• لما تموت، بتشوف نهايتك وبطاقة حياتك وتقدر تشاركها.<br>• ميراثك بيروح للحياة الجاية.<br>• 🌍 تحدي اليوم: نفس الحياة لكل الناس، حاول تحقق هدفه.</div><div class="card"><b>📊 إحصائياتك</b><div>الحيوات: ${N(META_.lives)}</div><div>أفضل نتيجة: ${N(META_.best)}</div><div>الإنجازات: ${N(Object.keys(META_.ach).length)} من ${N(Object.keys(ACH).length)}</div></div><button class="ch" data-a="x">تمام</button>`,a=>closeM());}
  if(t.id==="snd"){SND=!SND;localStorage.setItem('life-snd',SND?'1':'0');render();}
  if(t.id==="reset"){if(confirm("متأكد؟ هتفقد الحياة الحالية.")){localStorage.removeItem(SAVE);startScreen();}}
  if(t.dataset.rel){const r=rel(t.dataset.rel);if(G.flags.act===G.age){toast("استنى للسنة الجاية");return;}G.flags.act=G.age;r.bond=cl(r.bond+ri(6,14));stat("happy",4);stat("stress",-3);addLog(`قضيت وقت حلو مع ${r.n}.`,"good");r.mem=r.mem||[];if(R()<.5)r.mem.push(pick(["قعدتوا ساعات تتكلموا","خرجتوا مشوار حلو","ضحكتوا من قلبكم","أكلتوا مع بعض"])+" وانت عمرك "+N(G.age));if(r.mem.length>6)r.mem.shift();flush();render();save();}
