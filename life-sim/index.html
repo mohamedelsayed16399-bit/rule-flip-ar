@@ -684,6 +684,7 @@ $("#age").addEventListener("click",()=>{if(!G||G.dead||$("#modal").classList.con
 $("#mb").addEventListener("click",()=>beep(660,.04));
 function bar(l,v,c){return `<div class="st">${l} <b>${N(v)}</b><div class="bar"><i style="width:${v}%;background:${c}"></i></div></div>`;}
 const FOC=[['none','⚖️ عادي'],['study','📚 مذاكرة'],['work','💼 شغل'],['health','💪 صحة'],['social','🤝 ناس'],['fun','🎉 رفاهية']];
+function radarCard(){if(G.dead)return"";const ks=[["صحة",G.health],["سعادة",G.happy],["ذكاء",G.smarts],["جمال",G.looks],["علاقات",G.social],["هدوء",100-G.stress]];const cx=90,cy=80,R0=58;let pts=[],ax="",lb="";ks.forEach((k,i)=>{const an=-Math.PI/2+i*2*Math.PI/6;const v=Math.max(0,Math.min(100,k[1]))/100;pts.push((cx+Math.cos(an)*R0*v).toFixed(1)+","+(cy+Math.sin(an)*R0*v).toFixed(1));ax+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.cos(an)*R0).toFixed(1)}" y2="${(cy+Math.sin(an)*R0).toFixed(1)}" stroke="#ffffff22"/>`;lb+=`<text x="${(cx+Math.cos(an)*(R0+14)).toFixed(1)}" y="${(cy+Math.sin(an)*(R0+14)+3).toFixed(1)}" fill="#cfd6ff" font-size="10" text-anchor="middle">${k[0]}</text>`;});const rings=[.33,.66,1].map(f=>`<circle cx="${cx}" cy="${cy}" r="${R0*f}" fill="none" stroke="#ffffff1a"/>`).join("");const avg=Math.round(ks.reduce((a,k)=>a+k[1],0)/6);const lv=avg>=75?"حياة مستقرة وجميلة":avg>=55?"ماشي الحال":avg>=40?"محتاج تهتم بنفسك":"الأمور صعبة";return `<div class="card"><b>📊 حالتك دلوقتي</b><div style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 180 160" width="170" height="150">${rings}${ax}<polygon points="${pts.join(" ")}" fill="#4ea8ff55" stroke="#4ea8ff" stroke-width="2"/>${lb}</svg><div style="flex:1;text-align:center"><div style="font-size:30px;font-weight:700">${N(avg)}</div><small>متوسط حالتك</small><div style="margin-top:6px">${lv}</div></div></div></div>`;}
 function render(){
  if(!G)return;
  $('#focus').innerHTML=G.dead?'':FOC.map(f=>`<button data-f="${f[0]}" class="${(G.focus||'none')===f[0]?'on':''}">${f[1]}</button>`).join('');
@@ -699,7 +700,8 @@ drawScene();
  const m=$("#main");
  let h="";
  if(tab==="life"){
-  h='<div id="log">';
+  h+=radarCard();
+  h+='<div id="log">';
   for(const y of G.log.slice().reverse()){h+=`<div class="y">عمر ${N(y.age)} ${y.age===0?"(الميلاد)":""}</div>`;y.items.forEach(i=>h+=`<p class="${i.c}">${i.t}</p>`);}
   h+="</div>";
  }
