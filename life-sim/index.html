@@ -612,6 +612,25 @@ function timelineCanvas(){
 function timelineCard(){const cv=timelineCanvas();const u=cv.toDataURL("image/png");
  modal(`<h3>🗺️ خط حياتك</h3><img src="${u}" style="width:100%;border-radius:12px"><button class="ch" data-a="tshare">📤 شارك الصورة</button><button class="ch" data-a="tclose">رجوع</button>`,a=>{if(a==="tshare"){cv.toBlob(b=>{const f=new File([b],"my-timeline.png",{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:"خط حياتي"}).catch(()=>{});}else{const l=document.createElement("a");l.href=URL.createObjectURL(b);l.download="my-timeline.png";l.click();}});return;}closeM();});}
 
+function dynastyCanvas(){
+ const L=(G.lineage||[]).concat([{n:G.name,a:G.age,e:G.dead?(()=>{try{return endingInfo().t}catch(e){return"عايش"}})():"عايش دلوقتي",i:"🧑",g:G.gen||1}]);
+ const n=L.length,H=Math.max(1350,330+n*190+200);
+ const cv=document.createElement("canvas");cv.width=1080;cv.height=H;const c=cv.getContext("2d");c.direction="rtl";
+ const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,"#5a3a20");g.addColorStop(1,"#1b1530");c.fillStyle=g;c.fillRect(0,0,1080,H);
+ c.textAlign="center";c.fillStyle="#ffc857";c.font="bold 66px Tahoma,sans-serif";c.fillText("🧬 سلالة عيلة "+G.surname,540,120);
+ c.fillStyle="#e8d9b8";c.font="40px Tahoma,sans-serif";c.fillText(N(n)+" أجيال · "+G.city,540,185);
+ L.forEach((x,i)=>{const y=290+i*190,ind=(i%2)*70;c.fillStyle=i===n-1?"#3d2f66":"#2a2147";c.fillRect(110+ind,y,860-ind*2,150);
+  c.strokeStyle="#ffc857";c.lineWidth=4;c.strokeRect(110+ind,y,860-ind*2,150);
+  if(i<n-1){c.beginPath();c.moveTo(540,y+150);c.lineTo(540,y+190);c.stroke();}
+  c.fillStyle="#ffc857";c.textAlign="right";c.font="bold 30px Tahoma,sans-serif";c.fillText("الجيل "+N(x.g||i+1),950-ind,y+42);
+  c.fillStyle="#fff";c.font="bold 46px Tahoma,sans-serif";c.fillText(x.n,950-ind,y+95);
+  c.fillStyle="#a99fcb";c.font="30px Tahoma,sans-serif";c.fillText("عاش "+N(x.a)+" سنة · "+String(x.e).slice(0,26),950-ind,y+135);});
+ c.textAlign="center";c.fillStyle="#ffc857";c.font="bold 56px Tahoma,sans-serif";c.fillText("⭐ "+N(score()),540,H-110);
+ c.fillStyle="#e8d9b8";c.font="32px Tahoma,sans-serif";c.fillText("جرّب إنت: mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim",540,H-55);
+ return cv;}
+function dynastyCard(){const cv=dynastyCanvas();const u=cv.toDataURL("image/png");
+ modal(`<h3>🧬 سلالة العيلة</h3><img src="${u}" style="width:100%;border-radius:12px"><button class="ch" data-a="dshare">📤 شارك الصورة</button><button class="ch" data-a="dclose">رجوع</button>`,a=>{if(a==="dshare"){cv.toBlob(b=>{const f=new File([b],"my-dynasty.png",{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:"سلالتي"}).catch(()=>{});}else{const l=document.createElement("a");l.href=URL.createObjectURL(b);l.download="my-dynasty.png";l.click();}});return;}closeM();});}
+
 function storyText(){
  const m=G.male;const pr=(a,b)=>m?a:b;
  const parts=[];
@@ -689,8 +708,8 @@ function endLife(){
  السعادة: ${G.happy}٪ — الفلوس: ${fmt(G.money)} — الأولاد: ${N(G.kids)}<br>
  بيعيش بعده: ${rels}</div>
  <div class="card" style="text-align:center"><div style="font-size:44px">${endingInfo().ic}</div><b>النهاية: ${endingInfo().t}</b><div class="pill">${endingInfo().d}</div></div>${posterHTML()}<canvas id="chart" width="720" height="240" style="width:100%;border-radius:12px;background:#1b1530;margin-top:8px"></canvas><div class="card" style="line-height:1.8">📖 ${storyText()}</div>${dailyResult()}<div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
- <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="tl">🗺️ شارك خط حياتي (محطات الحياة)</button><button class="ch" data-a="copy">📋 انسخ ملخص حياتي كنص</button>${META_.heir?`<button class="ch" data-a="heir" style="background:linear-gradient(90deg,#4cd68a,#2e9e57);color:#06210f">🧬 كمّل بحياة ابنك/بنتك (الجيل ${N((META_.heir.gen||1)+1)})</button>`:""}<button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
- modal(_html,a=>{if(a==="copy"){const en=endingInfo();const tx=`🕊️ عِش حياتك\n${G.name} عاش ${N(G.age)} سنة في ${G.city}\nالنهاية: ${en.t}\nالفلوس: ${fmt(G.money)} | الأولاد: ${N(G.kids)} | السعادة: ${N(G.happy)}٪\n⭐ نتيجتي: ${N(score())}\nجرّب إنت: https://mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim/`;try{navigator.clipboard.writeText(tx).then(()=>toast("اتنسخ الملخص ✅"),()=>toast("مقدرتش أنسخ"));}catch(e){toast("مقدرتش أنسخ");}return;}if(a==="share"){shareCard();return;}if(a==="tl"){timelineCard();return;}if(a==="heir"){startHeir();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
+ <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="tl">🗺️ شارك خط حياتي (محطات الحياة)</button>${(G.gen||1)>1?`<button class="ch" data-a="dyn">🧬 شارك بطاقة السلالة</button>`:""}<button class="ch" data-a="copy">📋 انسخ ملخص حياتي كنص</button>${META_.heir?`<button class="ch" data-a="heir" style="background:linear-gradient(90deg,#4cd68a,#2e9e57);color:#06210f">🧬 كمّل بحياة ابنك/بنتك (الجيل ${N((META_.heir.gen||1)+1)})</button>`:""}<button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
+ modal(_html,a=>{if(a==="copy"){const en=endingInfo();const tx=`🕊️ عِش حياتك\n${G.name} عاش ${N(G.age)} سنة في ${G.city}\nالنهاية: ${en.t}\nالفلوس: ${fmt(G.money)} | الأولاد: ${N(G.kids)} | السعادة: ${N(G.happy)}٪\n⭐ نتيجتي: ${N(score())}\nجرّب إنت: https://mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim/`;try{navigator.clipboard.writeText(tx).then(()=>toast("اتنسخ الملخص ✅"),()=>toast("مقدرتش أنسخ"));}catch(e){toast("مقدرتش أنسخ");}return;}if(a==="share"){shareCard();return;}if(a==="tl"){timelineCard();return;}if(a==="dyn"){dynastyCard();return;}if(a==="heir"){startHeir();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
  try{drawPoster();drawChart();}catch(e){}
 }
 
@@ -915,7 +934,7 @@ function miniPitch(title,sub,cb){
   modal(h,k=>{closeM();cb({pts,amt,take:k==="take"});});};
  step();}
 function startHeir(){const h=META_.heir;if(!h)return;closeM();const m=R()<.5;META_.heir=null;saveMeta();newLife(m?mname():fname(),m,h);}
-function lineageCard(){const l=(META_.lineage||[]);if(!G||!G.gen||l.length<1)return"";const all=(G.lineage||[]);return `<div class="card"><b>🧬 سلالة العيلة (الجيل ${N(G.gen)})</b>${all.map(x=>`<div class="row"><div class="ic">${x.i||"🕊️"}</div><div class="t">${x.n}<small>الجيل ${N(x.g||1)} · عاش ${N(x.a)} سنة · ${x.e}</small></div></div>`).join("")}</div>`;}
+function lineageCard(){const l=(META_.lineage||[]);if(!G||!G.gen||l.length<1)return"";const all=(G.lineage||[]);return `<div class="card"><b>🧬 سلالة العيلة (الجيل ${N(G.gen)})</b>${all.map(x=>`<div class="row"><div class="ic">${x.i||"🕊️"}</div><div class="t">${x.n}<small>الجيل ${N(x.g||1)} · عاش ${N(x.a)} سنة · ${x.e}</small></div></div>`).join("")}<button class="ch" onclick="dynastyCard()">🧬 بطاقة السلالة (صورة للمشاركة)</button></div>`;}
 function startScreen(){
  rng=Math.random;
  G=null;$("#log").innerHTML="";
