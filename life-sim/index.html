@@ -632,6 +632,21 @@ function dynastyCanvas(){
 function dynastyCard(){const cv=dynastyCanvas();const u=cv.toDataURL("image/png");
  modal(`<h3>🧬 سلالة العيلة</h3><img src="${u}" style="width:100%;border-radius:12px"><button class="ch" data-a="dshare">📤 شارك الصورة</button><button class="ch" data-a="dclose">رجوع</button>`,a=>{if(a==="dshare"){cv.toBlob(b=>{const f=new File([b],"my-dynasty.png",{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:"سلالتي"}).catch(()=>{});}else{const l=document.createElement("a");l.href=URL.createObjectURL(b);l.download="my-dynasty.png";l.click();}});return;}closeM();});}
 
+function reportStats(){const h=G.hist||[];const log=G.log||[];let big=0,bad=0,tot=0;const byAge=[];log.forEach(y=>{let b=0,d=0;(y.items||[]).forEach(i=>{tot++;if(i.c==="big"){big++;b++;}if(i.c==="bad"){bad++;d++;}});byAge.push({a:y.age,b,d});});
+ let pk=null,hp=null,low=null;h.forEach(x=>{if(!pk||x.m>pk.m)pk=x;if(!hp||x.h>hp.h)hp=x;if(!low||x.m<low.m)low=x;});
+ const best=byAge.slice().sort((x,y)=>(y.b-y.d)-(x.b-x.d))[0],worst=byAge.slice().sort((x,y)=>(y.d-y.b)-(x.d-x.b))[0];
+ return{big,bad,tot,pk,hp,low,best:best&&best.b-best.d>0?best:null,worst:worst&&worst.d-worst.b>0?worst:null,years:log.length};}
+function reportCard(){if(!G)return"";const r=reportStats();if(r.years<3)return"";
+ const row=(ic,t,v)=>`<div class="row"><div class="ic">${ic}</div><div class="t">${t}<small>${v}</small></div></div>`;
+ let h=`<div class="card"><b>📊 تقرير حياتك (${N(r.years)} سنة)</b>`;
+ h+=row("🎉","لحظات كبيرة",N(r.big)+" · أحداث سيئة "+N(r.bad)+" · كل الأحداث "+N(r.tot));
+ if(r.pk)h+=row("💰","أغنى سنة",N(r.pk.a)+" سنة · "+fmt(r.pk.m));
+ if(r.low&&r.low.m<0)h+=row("📉","أصعب وضع مالي",N(r.low.a)+" سنة · "+fmt(r.low.m));
+ if(r.hp)h+=row("😊","أسعد سنة",N(r.hp.a)+" سنة · سعادة "+N(r.hp.h)+"٪");
+ if(r.best)h+=row("🌟","أحسن سنة في الأحداث",N(r.best.a)+" سنة · "+N(r.best.b)+" لحظة كبيرة");
+ if(r.worst)h+=row("⛈️","أتقل سنة",N(r.worst.a)+" سنة · "+N(r.worst.d)+" حدث سيئ");
+ return h+"</div>";}
+
 function storyText(){
  const m=G.male;const pr=(a,b)=>m?a:b;
  const parts=[];
@@ -709,7 +724,7 @@ function endLife(){
  السعادة: ${G.happy}٪ — الفلوس: ${fmt(G.money)} — الأولاد: ${N(G.kids)}<br>
  بيعيش بعده: ${rels}</div>
  <div class="card" style="text-align:center"><div style="font-size:44px">${endingInfo().ic}</div><b>النهاية: ${endingInfo().t}</b><div class="pill">${endingInfo().d}</div></div>${posterHTML()}<canvas id="chart" width="720" height="240" style="width:100%;border-radius:12px;background:#1b1530;margin-top:8px"></canvas><div class="card" style="line-height:1.8">📖 ${storyText()}</div>${dailyResult()}<div class="card">⭐ نتيجة الحياة: <b>${N(sc)}</b> (أفضل نتيجة: ${N(META_.best)})<br>🕊️ ${lg?`هتورّث ${fmt(lg)} للحياة الجاية.`:"مفيش ميراث."}</div>
- <div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="tl">🗺️ شارك خط حياتي (محطات الحياة)</button>${(G.gen||1)>1?`<button class="ch" data-a="dyn">🧬 شارك بطاقة السلالة</button>`:""}<button class="ch" data-a="copy">📋 انسخ ملخص حياتي كنص</button>${META_.heir?`<button class="ch" data-a="heir" style="background:linear-gradient(90deg,#4cd68a,#2e9e57);color:#06210f">🧬 كمّل بحياة ابنك/بنتك (الجيل ${N((META_.heir.gen||1)+1)})</button>`:""}<button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
+ ${reportCard()}<div class="card"><b>أهم محطات حياتك</b>${miles}</div><button class="ch" data-a="share">📤 شارك بطاقة حياتي</button><button class="ch" data-a="tl">🗺️ شارك خط حياتي (محطات الحياة)</button>${(G.gen||1)>1?`<button class="ch" data-a="dyn">🧬 شارك بطاقة السلالة</button>`:""}<button class="ch" data-a="copy">📋 انسخ ملخص حياتي كنص</button>${META_.heir?`<button class="ch" data-a="heir" style="background:linear-gradient(90deg,#4cd68a,#2e9e57);color:#06210f">🧬 كمّل بحياة ابنك/بنتك (الجيل ${N((META_.heir.gen||1)+1)})</button>`:""}<button class="ch" data-a="new">حياة جديدة ✨</button><button class="ch" data-a="log">اقرأ قصة حياتي</button>`;
  modal(_html,a=>{if(a==="copy"){const en=endingInfo();const tx=`🕊️ عِش حياتك\n${G.name} عاش ${N(G.age)} سنة في ${G.city}\nالنهاية: ${en.t}\nالفلوس: ${fmt(G.money)} | الأولاد: ${N(G.kids)} | السعادة: ${N(G.happy)}٪\n⭐ نتيجتي: ${N(score())}\nجرّب إنت: https://mohamedelsayed16399-bit.github.io/rule-flip-ar/life-sim/`;try{navigator.clipboard.writeText(tx).then(()=>toast("اتنسخ الملخص ✅"),()=>toast("مقدرتش أنسخ"));}catch(e){toast("مقدرتش أنسخ");}return;}if(a==="share"){shareCard();return;}if(a==="tl"){timelineCard();return;}if(a==="dyn"){dynastyCard();return;}if(a==="heir"){startHeir();return;}if(a==="new"){closeM();startScreen();}else{closeM();render();$("#age").style.display="none";}});
  try{drawPoster();drawChart();}catch(e){}
 }
@@ -850,7 +865,7 @@ drawScene();
   h+="</div>";
  }
  if(tab==="me"){
-  h+=`<div class="card"><b>🧬 حياتك دي</b><div>${(G.traits||[]).map(t=>`<span class="tag">${TRAITS[t][0]} ${TRAITS[t][1]}</span>`).join('')}</div><div class="pill">الإيمان ${G.faith}٪ · الشهرة ${G.fame}٪ · سفر ${G.travel} مرات · سجل جنائي ${G.crimeRec}</div><div class="pill">عدد الحيوات: ${N(META_.lives)} · أفضل نتيجة ${N(META_.best)}</div></div><div class="card"><b>🏅 الإنجازات (${Object.keys(META_.ach).length}/${Object.keys(ACH).length})</b>`;
+  h+=reportCard();h+=`<div class="card"><b>🧬 حياتك دي</b><div>${(G.traits||[]).map(t=>`<span class="tag">${TRAITS[t][0]} ${TRAITS[t][1]}</span>`).join('')}</div><div class="pill">الإيمان ${G.faith}٪ · الشهرة ${G.fame}٪ · سفر ${G.travel} مرات · سجل جنائي ${G.crimeRec}</div><div class="pill">عدد الحيوات: ${N(META_.lives)} · أفضل نتيجة ${N(META_.best)}</div></div><div class="card"><b>🏅 الإنجازات (${Object.keys(META_.ach).length}/${Object.keys(ACH).length})</b>`;
   Object.entries(ACH).forEach(([k,a])=>h+=`<div class="row ach ${META_.ach[k]?"got":""}"><div class="ic">${a[0]}</div><div class="t">${a[1]}<small>${a[2]}</small></div></div>`);
   h+=`</div><button class="btn" id="snd">${SND?'🔊 الصوت شغال':'🔇 الصوت مقفول'}</button> <button class="btn" id="fs">🔠 حجم الخط</button> <button class="btn" id="help">❓ مساعدة وإحصائيات</button> <button class="btn" id="reset">🗑️ ابدأ حياة جديدة (هتفقد دي)</button>`;
  }
